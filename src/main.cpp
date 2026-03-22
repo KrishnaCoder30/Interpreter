@@ -31,6 +31,7 @@ int main(int argc, char *argv[]) {
     {',' , "COMMA"},
     {'-' , "MINUS"},
     {';' , "SEMICOLON"},
+    {'=' , "EQUAL"},
   };
   if (command == "tokenize") {
     std::string file_contents = read_file_contents(argv[2]);
