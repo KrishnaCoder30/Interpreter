@@ -77,6 +77,22 @@ private:
         addToken("STRING", "\"" + value + "\"", value);
     }
 
+    void scanNumber(){
+        string numStr;
+        int ct = 0;
+        while(isAtEnd() && ((isdigit(peek())) || (peek() == '.' && ct == 0))){
+            if(peek() == '.'){ 
+                ct++;
+            }
+            numStr += advance();
+            
+
+            
+        }
+        
+        addToken("NUMBER", numStr, numStr);
+    }
+
     void scanToken() {
         char c = advance();
 
@@ -84,6 +100,10 @@ private:
         if (c == ' ' || c == '\r' || c == '\t') return;
         if (c == '\n') { line++; return; }
 
+        if(isdigit(c)){
+            scanNumber();
+            return;
+        }
         // strings
         if (c == '"') { scanString(); return; }
 
@@ -97,7 +117,7 @@ private:
         string twoChar = string(1, c) + peek();
         auto it2 = twoCharTokens.find(twoChar);
         if (it2 != twoCharTokens.end()) {
-            advance(); // consume second char
+            advance(); 
             addToken(it2->second, twoChar);
             return;
         }
