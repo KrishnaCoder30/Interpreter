@@ -36,37 +36,37 @@ int main(int argc, char *argv[]) {
     //
     cerr << "$ ./your_program.sh tokenize test.lox" << endl;
     for (auto u : file_contents) {
-      // if(u == '{'){
-      //     cout<<"LEFT_BRACE { null"<<endl;
-      // }
-      // else if(u == '}'){
-      //     cout<<"RIGHT_BRACE } null"<<endl;
-      // }
-      // else if(u == '('){
-      //     cout<<"LEFT_PAREN ( null"<<endl;
-      // }
-      // else if(u == ')'){
-      //     cout<<"RIGHT_PAREN ) null"<<endl;
-      // }
-      // else if(u == '*'){
-      //     cout<<"STAR * null"<<endl;
-      // }
-      // else if(u == '.'){
-      //     cout<<"DOT . null"<<endl;
-      // }
-      // else if(u == '+'){
-      //     cout<<"PLUS + null"<<endl;
-      // }
-      // else if(u == ','){
-      //     cout<<"COMMA , null"<<endl;
-      // }
-      // else if(u == '-'){
-      //     cout<<"MINUS - null"<<endl;
-      // }
-      // else if(u == ';'){
-      //     cout<<"SEMICOLON ; null"<<endl;
-      // }
-      cout << token[u] << " " << u << " null" << endl;
+      if(u == '{'){
+          cout<<"LEFT_BRACE { null"<<endl;
+      }
+      else if(u == '}'){
+          cout<<"RIGHT_BRACE } null"<<endl;
+      }
+      else if(u == '('){
+          cout<<"LEFT_PAREN ( null"<<endl;
+      }
+      else if(u == ')'){
+          cout<<"RIGHT_PAREN ) null"<<endl;
+      }
+      else if(u == '*'){
+          cout<<"STAR * null"<<endl;
+      }
+      else if(u == '.'){
+          cout<<"DOT . null"<<endl;
+      }
+      else if(u == '+'){
+          cout<<"PLUS + null"<<endl;
+      }
+      else if(u == ','){
+          cout<<"COMMA , null"<<endl;
+      }
+      else if(u == '-'){
+          cout<<"MINUS - null"<<endl;
+      }
+      else if(u == ';'){
+          cout<<"SEMICOLON ; null"<<endl;
+      }
+    //   cout << token[u] << " " << u << " null" << endl;
     }
     std::cout << "EOF  null" << std::endl; // Placeholder, replace this line
                                            // when implementing the scanner
