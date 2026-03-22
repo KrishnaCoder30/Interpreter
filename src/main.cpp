@@ -58,6 +58,12 @@ int main(int argc, char *argv[]) {
       } else if (u == ';') {
         cout << "SEMICOLON ; null" << endl;
       }
+      else if(u == '$'){
+        cout << "UNEXPECTED CHARACTER $ null" << endl;
+      }
+      else if(u == '#'){
+        cout << "UNEXPECTED CHARACTER # null" << endl;
+      }
     }
     std::cout << "EOF  null" << std::endl; // Placeholder, replace this line
                                            // when implementing the scanner
