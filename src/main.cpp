@@ -77,8 +77,9 @@ private:
         addToken("STRING", "\"" + value + "\"", value);
     }
 
-    void scanNumber(){
+    void scanNumber(char c){
         string numStr = "";
+        numStr += c;
         int ct = 0;
         while(isAtEnd() && ((isdigit(peek())) || (peek() == '.' && ct == 0))){
             if(peek() == '.'){ 
@@ -98,7 +99,7 @@ private:
         if (c == '\n') { line++; return; }
 
         if(isdigit(c)){
-            scanNumber();
+            scanNumber(c);
             return;
         }
         // strings
