@@ -159,8 +159,8 @@ private:
             return;
         }
 
-        
-
+        scanIdentifier(c);
+        return;
 
     }
 
