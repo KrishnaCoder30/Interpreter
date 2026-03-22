@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
                 s += file_contents[i];
                 i++;
             }
-            if(file_contents[i] != '"'){
+            if(i < file_contents.length() && file_contents[i] != '"'){
                 cerr <<"[line " << line << "] Error: Unterminated string" << endl;
                 has_error = true;
             }
