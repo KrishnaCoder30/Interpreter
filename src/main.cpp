@@ -3,6 +3,8 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include<iostream>
+using namespace std;
 
 std::string read_file_contents(const std::string& filename);
 
@@ -26,9 +28,14 @@ int main(int argc, char *argv[]) {
         
         // TODO: Uncomment the code below to pass the first stage
         // 
-        if (!file_contents.empty()) {
-            std::cerr << "Scanner not implemented" << std::endl;
-            return 1;
+        cerr<<"$ ./your_program.sh tokenize test.lox"<<endl;
+        for(auto u : file_contents){
+            if(u == '('){
+                cerr<<"LEFT_PAREN ( null"<<endl;
+            }
+            else{
+                cerr<<"RIGHT_PAREN ( null"<<endl;
+            }
         }
         std::cout << "EOF  null" << std::endl; // Placeholder, replace this line when implementing the scanner
         
