@@ -41,6 +41,7 @@ private:
 
     static const unordered_map<char, string> singleCharTokens;
     static const unordered_map<string, string> twoCharTokens;
+    static const unordered_map<char, string> unExpectedTokens;
 
     bool isAtEnd() const { return pos >= (int)source.length(); }
 
@@ -104,6 +105,15 @@ private:
         addToken("NUMBER", lexemme, literal);
     }
 
+    void scanIdentifier(char c){
+        string identifier = "";
+        identifier += c;
+        while(!isAtEnd() && (isalnum(peek()) || peek() == '_')){
+            identifier += advance();
+        }
+        addToken("IDENTIFIER", identifier , "null");
+    }
+
     void scanToken() {
         char c = advance();
 
@@ -140,8 +150,18 @@ private:
             return;
         }
 
+
+
         // unexpected character
-        error("Unexpected character: " + string(1, c));
+        auto it3 = unExpectedTokens.find(c);
+        if(it3 != unExpectedTokens.end()){
+            error("Unexpected character: " + string(1, c));
+            return;
+        }
+
+        
+
+
     }
 
     vector<Token> tokens;
@@ -162,6 +182,13 @@ const unordered_map<char, string> Scanner::singleCharTokens = {
 const unordered_map<string, string> Scanner::twoCharTokens = {
     {"==", "EQUAL_EQUAL"}, {"!=", "BANG_EQUAL"},
     {"<=", "LESS_EQUAL"},  {">=", "GREATER_EQUAL"},
+};
+
+const unordered_map<char, string> Scanner::unExpectedTokens = {
+    {'%', "PERCENT"}, {'#', "HASH"},
+    {'@', "AT"},  {'&', "AMPERSAND"},
+    {'$', "DOLLAR"}, {'~', "TILDE"},
+    {'^', "CARET"}, {'|', "BAR"}, {'\\', "BACKSLASH"}
 };
 
 // ─── Helpers ────────────────────────────────────────────────────────
