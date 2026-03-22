@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
             ++line;
         }
         else if(uv == "//"){
-            while(file_contents[i] != '\n'){
+            while(i < file_contents.length() && file_contents[i] != '\n'){
                 i++;
             }
             ++line;
