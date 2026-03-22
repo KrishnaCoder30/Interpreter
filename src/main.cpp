@@ -24,12 +24,12 @@ int main(int argc, char *argv[]) {
   }
 
   const std::string command = argv[1];
-  map<char, string> token = {
-      {'{', "LEFT_BRACE"},  {'}', "RIGHT_BRACE"}, {'(', "LEFT_PAREN"},
-      {')', "RIGHT_PAREN"}, {'*', "STAR"},        {'.', "DOT"},
-      {'+', "PLUS"},        {',', "COMMA"},       {'-', "MINUS"},
-      {';', "SEMICOLON"},
-  };
+//   map<char, string> token = {
+//       {'{', "LEFT_BRACE"},  {'}', "RIGHT_BRACE"}, {'(', "LEFT_PAREN"},
+//       {')', "RIGHT_PAREN"}, {'*', "STAR"},        {'.', "DOT"},
+//       {'+', "PLUS"},        {',', "COMMA"},       {'-', "MINUS"},
+//       {';', "SEMICOLON"},
+//   };
   if (command == "tokenize") {
     std::string file_contents = read_file_contents(argv[2]);
 
