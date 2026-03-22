@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
                 cout<<"LEFT_PAREN ( null"<<endl;
             }
             else{
-                cout<<"RIGHT_PAREN ( null"<<endl;
+                cout<<"RIGHT_PAREN ) null"<<endl;
             }
         }
         std::cout << "EOF  null" << std::endl; // Placeholder, replace this line when implementing the scanner
