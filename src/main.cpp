@@ -4,6 +4,7 @@
 #include <map>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 
 using namespace std;
 
@@ -19,6 +20,18 @@ int main(int argc, char *argv[]) {
   }
 
   const std::string command = argv[1];
+  unordered_map<char, string> token = {
+    {'{', "LEFT_BRACE"},
+    {'}' , "RIGHT_BRACE"},
+    {'(' , "LEFT_PAREN"},
+    {')' , "RIGHT_PAREN"},
+    {'*' , "STAR"},
+    {'.' , "DOT"},
+    {'+' , "PLUS"},
+    {',' , "COMMA"},
+    {'-' , "MINUS"},
+    {';' , "SEMICOLON"},
+  };
   if (command == "tokenize") {
     std::string file_contents = read_file_contents(argv[2]);
 
@@ -26,34 +39,16 @@ int main(int argc, char *argv[]) {
     bool has_error = false;
 
     for (auto u : file_contents) {
-      if (u == '{') {
-        cout << "LEFT_BRACE { null" << endl;
-      } else if (u == '}') {
-        cout << "RIGHT_BRACE } null" << endl;
-      } else if (u == '(') {
-        cout << "LEFT_PAREN ( null" << endl;
-      } else if (u == ')') {
-        cout << "RIGHT_PAREN ) null" << endl;
-      } else if (u == '*') {
-        cout << "STAR * null" << endl;
-      } else if (u == '.') {
-        cout << "DOT . null" << endl;
-      } else if (u == '+') {
-        cout << "PLUS + null" << endl;
-      } else if (u == ',') {
-        cout << "COMMA , null" << endl;
-      } else if (u == '-') {
-        cout << "MINUS - null" << endl;
-      } else if (u == ';') {
-        cout << "SEMICOLON ; null" << endl;
-      } else if (u == ' ' || u == '\r' || u == '\t') {
+        if (u == ' ' || u == '\r' || u == '\t') {
         // Ignore whitespace
-      } else if (u == '\n') {
-        ++line;
-      } else {
-        cerr <<"[line " << line << "] Error: Unexpected character: " << u << endl;
-        has_error = true;
-      }
+        } else if (u == '\n') {
+            ++line;
+        } else if (token.count(u)) {
+            cout << token[u] << " " << u << " null" << endl;
+        } else {
+            cerr <<"[line " << line << "] Error: Unexpected character: " << u << endl;
+            has_error = true;
+        }
     }
 
     std::cout << "EOF  null" << std::endl;
