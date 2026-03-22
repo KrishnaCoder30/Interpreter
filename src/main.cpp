@@ -260,6 +260,21 @@ class Parser{
                 v += ')';
             }
         }
+        else if(s[i] == '"'){
+            string str = "";
+            i++;
+            while(i <= j && s[i] != '"'){
+                str += s[i];
+                i++;
+            }
+            if(i <= j){
+                v += str;
+                parseExpr(s , i+1 , j);
+            }
+            else{
+                v += str;
+            }
+        }
         else{
             string num = "";
             if(s[i] == '-'){
