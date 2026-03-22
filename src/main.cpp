@@ -32,10 +32,11 @@ int main(int argc, char *argv[]) {
     {'-' , "MINUS"},
     {';' , "SEMICOLON"},
     {'=' , "EQUAL"},
+    {'!' , "BANG"}
   };
   unordered_map<string, string> token2 = {
     {"<=" , "LESS_EQUAL"},
-    {"!=" , "NOT_EQUAL"},
+    {"!=" , "BANG_EQUAL"},
     {"<=" , "LESS_EQUAL"},
     {"<=" , "LESS_EQUAL"},
     {"==" , "EQUAL_EQUAL"},
