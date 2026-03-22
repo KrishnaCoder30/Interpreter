@@ -87,7 +87,7 @@ private:
             }
             numStr += advance();
         }
-        
+        string lexemme = numStr;
         while(numStr.size() > 0 && numStr.back() == '0'){
             numStr.pop_back();
         }
@@ -101,7 +101,7 @@ private:
             literal = numStr + ".0";
         }
         
-        addToken("NUMBER", numStr, literal);
+        addToken("NUMBER", lexemme, literal);
     }
 
     void scanToken() {
