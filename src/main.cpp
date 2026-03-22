@@ -65,7 +65,7 @@ private:
         hasError = true;
     }
 
-    void scanString() {
+    void scparseExprtring() {
         string value;
         while (!isAtEnd() && peek() != '"') {
             if (peek() == '\n') line++;
@@ -134,7 +134,7 @@ private:
             return;
         }
         // strings
-        if (c == '"') { scanString(); return; }
+        if (c == '"') { scparseExprtring(); return; }
 
         // comments
         if (c == '/' && peek() == '/') {
@@ -229,7 +229,7 @@ class Parser{
         this->source = source;
     }
 
-    void Ans(string &s , int i , int j){
+    void parseExpr(string &s , int i , int j){
         if(i > j) return;
         // 2 + 3 ==> (+ 2.0 3.0)
         // 2 + 3 * 4 ==> (+ 2.0 (* 3.0 4.0))
@@ -247,16 +247,16 @@ class Parser{
                 v += '(';
                 v += "group";
                 v += ' ';
-                Ans(s , i+1 , j-1);
+                parseExpr(s , i+1 , j-1);
                 v += ')';
             }
             else{
                 v += '(';
                 v += s[k];
                 v += ' ';
-                Ans(s , i ,k-1 );
+                parseExpr(s , i ,k-1 );
                 v += ' ';
-                Ans(s , k+1 , j);
+                parseExpr(s , k+1 , j);
                 v += ')';
             }
         }
@@ -279,7 +279,7 @@ class Parser{
                 v += s[i];
                 v += ' ';
                 v += num;
-                Ans(s , i+1 , j);
+                parseExpr(s , i+1 , j);
             }
             else{
                 v += num;
@@ -287,6 +287,8 @@ class Parser{
         }
         
     }
+
+
 
     void parse(){
         if(source == "true"){
@@ -301,7 +303,11 @@ class Parser{
             v = "nil";
             return;
         }
-        Ans(source , 0 , source.size()-1);
+        if(source[0] == '"' && source[source.size()-1] == '"'){
+            v = source.substr(1 , source.size()-2);
+            return;
+        }
+        parseExpr(source , 0 , source.size()-1);
     }
 
     
