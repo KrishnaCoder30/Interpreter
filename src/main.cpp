@@ -33,8 +33,14 @@ int main(int argc, char *argv[]) {
             if(u == '{'){
                 cout<<"LEFT_BRACE { null"<<endl;
             }
-            else{
+            else if(u == '}'){
                 cout<<"RIGHT_BRACE } null"<<endl;
+            }
+            else if(u == '('){
+                cout<<"LEFT_PAREN ( null"<<endl;
+            }
+            else if(u == ')'){
+                cout<<"RIGHT_PAREN ) null"<<endl;
             }
         }
         std::cout << "EOF  null" << std::endl; // Placeholder, replace this line when implementing the scanner
