@@ -275,7 +275,7 @@ class Parser{
                 v += str;
             }
         }
-        else{
+        else if(isdigit(s[i]) || (s[i] == '-' && isdigit(s[i+1]))){
             string num = "";
             if(s[i] == '-'){
                 num += s[i];
@@ -300,6 +300,20 @@ class Parser{
                 v += num;
             }
         }
+        else{
+            string id = "";
+            while(i <= j && isalpha(s[i])){
+                id += s[i];
+                i++;
+            }
+            if(i <= j){
+                v += id;
+                parseExpr(s , i+1 , j);
+            }
+            else{
+                v += id;
+            }
+        }
         
     }
 
@@ -318,10 +332,10 @@ class Parser{
             v = "nil";
             return;
         }
-        if(source[0] == '"' && source[source.size()-1] == '"'){
-            v = source.substr(1 , source.size()-2);
-            return;
-        }
+        // if(source[0] == '"' && source[source.size()-1] == '"'){
+        //     v = source.substr(1 , source.size()-2);
+        //     return;
+        // }
         parseExpr(source , 0 , source.size()-1);
     }
 
