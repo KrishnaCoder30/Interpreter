@@ -68,6 +68,10 @@ int main(int argc, char *argv[]) {
                 s += file_contents[i];
                 i++;
             }
+            if(file_contents[i-1] != '"'){
+                cerr <<"[line " << line << "] Error: Unterminated string" << endl;
+                has_error = true;
+            }
             cout << "STRING " << "\"" << s << "\" " << s << endl;
         }
         else if(uv == "//"){
