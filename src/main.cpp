@@ -293,6 +293,10 @@ class Parser{
             while(ct && num[num.size()-1] == '0'){
                 num.pop_back();
             }
+            if(num[num.size()-1] == '.'){
+                ct = 0;
+                num.pop_back();
+            }
             if(i <= j){
                 v += s[i];
                 v += ' ';
