@@ -287,15 +287,16 @@ class Parser{
                 num += s[i];
                 i++;
             }
-            if(ct == 0){
-                num += ".0";
-            }
+            
             while(ct && num[num.size()-1] == '0'){
                 num.pop_back();
             }
             if(num[num.size()-1] == '.'){
                 ct = 0;
                 num.pop_back();
+            }
+            if(ct == 0){
+                num += ".0";
             }
             if(i <= j){
                 v += s[i];
