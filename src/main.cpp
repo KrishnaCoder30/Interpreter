@@ -78,16 +78,13 @@ private:
     }
 
     void scanNumber(){
-        string numStr;
+        string numStr = "";
         int ct = 0;
         while(isAtEnd() && ((isdigit(peek())) || (peek() == '.' && ct == 0))){
             if(peek() == '.'){ 
                 ct++;
             }
             numStr += advance();
-            
-
-            
         }
         
         addToken("NUMBER", numStr, numStr);
