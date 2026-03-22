@@ -289,6 +289,18 @@ class Parser{
     }
 
     void parse(){
+        if(source == "true"){
+            v = "true";
+            return;
+        }
+        if(source == "false"){
+            v = "false";
+            return;
+        }
+        if(source == "nil"){
+            v = "nil";
+            return;
+        }
         Ans(source , 0 , source.size()-1);
     }
 
