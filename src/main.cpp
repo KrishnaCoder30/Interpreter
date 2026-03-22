@@ -38,12 +38,38 @@ int main(int argc, char *argv[]) {
     int line = 1;
     bool has_error = false;
 
-    for (auto u : file_contents) {
+    for(int i = 0; i < file_contents.length(); i++) {
+        char u = file_contents[i];
+        char v = file_contents[i+1];
+        string uv = "";
+        uv += u;
+        uv += v;
         if (u == ' ' || u == '\r' || u == '\t') {
         // Ignore whitespace
         } else if (u == '\n') {
             ++line;
-        } else if (token.count(u)) {
+        }
+        else if(uv == "<=") {
+            cout << "LESS_EQUAL " << uv << " null" << endl;
+            i++;
+        }
+        else if(uv == "!=") {
+            cout << "NOT_EQUAL " << uv << " null" << endl;
+            i++;
+        }
+        else if(uv == "<=") {
+            cout << "LESS_EQUAL " << uv << " null" << endl;
+            i++;
+        }
+        else if(uv == "<=") {
+            cout << "LESS_EQUAL " << uv << " null" << endl;
+            i++;
+        }
+        else if(uv == "==") {
+            cout << "EQUAL_EQUAL " << uv << " null" << endl;
+            i++;
+        }
+        else if (token.count(u)) {
             cout << token[u] << " " << u << " null" << endl;
         } else {
             cerr <<"[line " << line << "] Error: Unexpected character: " << u << endl;
