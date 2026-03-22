@@ -98,7 +98,7 @@ private:
         }
         string literal = numStr;
         if(ct == 0){
-            literal = numStr += ".0";
+            literal = numStr + ".0";
         }
         
         addToken("NUMBER", numStr, literal);
