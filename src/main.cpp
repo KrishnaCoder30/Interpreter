@@ -42,6 +42,7 @@ private:
     static const unordered_map<char, string> singleCharTokens;
     static const unordered_map<string, string> twoCharTokens;
     static const unordered_map<char, string> unExpectedTokens;
+    static const unordered_map<string, string> reservedKeywords;
 
     bool isAtEnd() const { return pos >= (int)source.length(); }
 
@@ -111,6 +112,12 @@ private:
         identifier += c;
         while(!isAtEnd() && (isalnum(peek()) || peek() == '_')){
             identifier += advance();
+        }
+
+        auto it = reservedKeywords.find(identifier);
+        if(it != reservedKeywords.end()){
+            addToken(it->second, identifier);
+            return;
         }
         addToken("IDENTIFIER", identifier , "null");
     }
@@ -191,6 +198,28 @@ const unordered_map<char, string> Scanner::unExpectedTokens = {
     {'$', "DOLLAR"}, {'~', "TILDE"},
     {'^', "CARET"}, {'|', "BAR"}, {'\\', "BACKSLASH"}
 };
+
+const unordered_map<string, string> Scanner::reservedKeywords = {
+    // and, class, else, false, for, fun, if, nil, or, print, return, super, this, true, var, while
+    {"and", "AND"},
+    {"class", "CLASS"},
+    {"else", "ELSE"},
+    {"false", "FALSE"},
+    {"for", "FOR"},
+    {"fun", "FUN"},
+    {"if", "IF"},
+    {"nil", "NIL"},
+    {"or", "OR"},
+    {"print", "PRINT"},
+    {"return", "RETURN"},
+    {"super", "SUPER"},
+    {"this", "THIS"},
+    {"true", "TRUE"},
+    {"var", "VAR"},
+    {"while", "WHILE"},
+};
+
+
 
 // ─── Helpers ────────────────────────────────────────────────────────
 string readFile(const string& path) {
