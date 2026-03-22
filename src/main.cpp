@@ -91,16 +91,17 @@ private:
         while(numStr.size() > 0 && numStr.back() == '0'){
             numStr.pop_back();
         }
+
         if(numStr.back() == '.'){
             ct = 0;
             numStr.pop_back();
         }
+        string literal = numStr;
         if(ct == 0){
-            numStr += '.';
-            numStr += '0';
+            literal = numStr += ".0";
         }
         
-        addToken("NUMBER", numStr, numStr);
+        addToken("NUMBER", numStr, literal);
     }
 
     void scanToken() {
