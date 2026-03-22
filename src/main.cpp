@@ -219,6 +219,82 @@ const unordered_map<string, string> Scanner::reservedKeywords = {
     {"while", "WHILE"},
 };
 
+class Parser{
+    public:
+    string source;
+    int pos = 0;
+    string v = "";
+
+    Parser(string source){
+        this->source = source;
+    }
+
+    void Ans(string &s , int i , int j){
+        if(i == s.size()) return;
+        // 2 + 3 ==> (+ 2.0 3.0)
+        // 2 + 3 * 4 ==> (+ 2.0 (* 3.0 4.0))
+        // (5 - (3 - 1)) + -1 ==> (+ (group (- 5.0 (group (- 3.0 1.0)))) (- 1.0))
+
+        if(s[i] == '('){
+            int k = i+1;
+            int open = 1;
+            while(k <= j && open > 0){
+                if(s[k] == '(') open++;
+                if(s[k] == ')') open--;
+                k++;
+            }
+            if(k == j+1){
+                v += '(';
+                v += "group";
+                v += ' ';
+                Ans(s , i+1 , j-1);
+                v += ')';
+            }
+            else{
+                v += '(';
+                v += s[k];
+                v += ' ';
+                Ans(s , i ,k-1 );
+                v += ' ';
+                Ans(s , k+1 , j);
+                v += ')';
+            }
+        }
+        else{
+            string num = "";
+            if(s[i] == '-'){
+                num += s[i];
+                i++;
+            }
+            int ct = 0;
+            while(i <= j && ((isdigit(s[i]) || (s[i] == '.' && ct == 0)))){
+                if(s[i] == '.') ct++;
+                num += s[i];
+                i++;
+            }
+            if(ct == 0){
+                num += ".0";
+            }
+            if(i <= j){
+                v += s[i];
+                v += ' ';
+                v += num;
+                Ans(s , i+1 , j);
+            }
+            else{
+                v += num;
+            }
+        }
+        
+    }
+
+    void parse(){
+        Ans(source , 0 , source.size()-1);
+    }
+
+    
+    
+};
 
 
 // ─── Helpers ────────────────────────────────────────────────────────
@@ -251,6 +327,12 @@ int main(int argc, char* argv[]) {
         }
 
         return ok ? 0 : 65;
+    }
+    else if(command == "parse"){
+        string source = readFile(argv[2]);
+        Parser parser(source);
+        parser.parse();
+        cout << parser.v << endl;
     }
 
     cerr << "Unknown command: " << command << endl;
