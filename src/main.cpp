@@ -10,6 +10,30 @@ using namespace std;
 
 std::string read_file_contents(const std::string &filename);
 
+class Token {
+    public:
+    string type;
+    string lexeme;
+    string literal;
+    int line;
+    string toString() {
+        if(type != "ERROR"){
+            return type + " " + lexeme + " " + literal;
+        }
+        else {
+            return "[line " + to_string(line) + "] Error: " + lexeme;
+        }
+    }
+
+    Token(string type, string lexeme, string literal, int line) {
+        this->type = type;
+        this->lexeme = lexeme;
+        this->literal = literal;
+        this->line = line;
+    }
+    
+};
+
 int main(int argc, char *argv[]) {
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
@@ -44,6 +68,7 @@ int main(int argc, char *argv[]) {
     {"==" , "EQUAL_EQUAL"},
     {"//" , "BREAK"}
   };
+
   if (command == "tokenize") {
     std::string file_contents = read_file_contents(argv[2]);
 
@@ -52,10 +77,11 @@ int main(int argc, char *argv[]) {
 
     for(int i = 0; i < file_contents.length(); i++) {
         char u = file_contents[i];
-        char v = file_contents[i+1];
         string uv = "";
         uv += u;
-        uv += v;
+        if (i + 1 < file_contents.length()) {
+            uv += file_contents[i + 1];
+        }
         if (u == ' ' || u == '\r' || u == '\t') {
 
         } else if (u == '\n') {
@@ -68,11 +94,12 @@ int main(int argc, char *argv[]) {
                 s += file_contents[i];
                 i++;
             }
-            if(i == file_contents.length() ){
+            if(i >= file_contents.length()){
                 cerr <<"[line " << line << "] Error: Unterminated string." << endl;
                 has_error = true;
+            } else {
+                cout << "STRING " << "\"" << s << "\" " << s << endl;
             }
-            cout << "STRING " << "\"" << s << "\" " << s << endl;
         }
         else if(uv == "//"){
             while(i < file_contents.length() && file_contents[i] != '\n'){
