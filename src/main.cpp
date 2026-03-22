@@ -89,7 +89,8 @@ private:
             numStr += advance();
         }
         string lexemme = numStr;
-        while(numStr.size() > 0 && numStr.back() == '0'){
+
+        while(numStr.size() > 0 && numStr.back() == '0' && ct){
             numStr.pop_back();
         }
 
