@@ -88,6 +88,18 @@ private:
             numStr += advance();
         }
         
+        while(numStr.size() > 0 && numStr.back() == '0'){
+            numStr.pop_back();
+        }
+        if(numStr.back() == '.'){
+            ct = 0;
+            numStr.pop_back();
+        }
+        if(ct == 0){
+            numStr += '.';
+            numStr += '0';
+        }
+        
         addToken("NUMBER", numStr, numStr);
     }
 
