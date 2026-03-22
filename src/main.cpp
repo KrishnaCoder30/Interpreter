@@ -33,6 +33,13 @@ int main(int argc, char *argv[]) {
     {';' , "SEMICOLON"},
     {'=' , "EQUAL"},
   };
+  unordered_map<string, string> token2 = {
+    {"<=" , "LESS_EQUAL"},
+    {"!=" , "NOT_EQUAL"},
+    {"<=" , "LESS_EQUAL"},
+    {"<=" , "LESS_EQUAL"},
+    {"==" , "EQUAL_EQUAL"},
+  };
   if (command == "tokenize") {
     std::string file_contents = read_file_contents(argv[2]);
 
@@ -50,24 +57,8 @@ int main(int argc, char *argv[]) {
         } else if (u == '\n') {
             ++line;
         }
-        else if(uv == "<=") {
-            cout << "LESS_EQUAL " << uv << " null" << endl;
-            i++;
-        }
-        else if(uv == "!=") {
-            cout << "NOT_EQUAL " << uv << " null" << endl;
-            i++;
-        }
-        else if(uv == "<=") {
-            cout << "LESS_EQUAL " << uv << " null" << endl;
-            i++;
-        }
-        else if(uv == "<=") {
-            cout << "LESS_EQUAL " << uv << " null" << endl;
-            i++;
-        }
-        else if(uv == "==") {
-            cout << "EQUAL_EQUAL " << uv << " null" << endl;
+        else if(token2.count(uv)){
+            cout << token2[uv] << " " << uv << " null" << endl;
             i++;
         }
         else if (token.count(u)) {
