@@ -61,6 +61,15 @@ int main(int argc, char *argv[]) {
         } else if (u == '\n') {
             ++line;
         }
+        else if(u == '"'){
+            string s = "";
+            i++;
+            while(i < file_contents.length() && file_contents[i] != '"'){
+                s += file_contents[i];
+                i++;
+            }
+            cout << "STRING " << "\"" << s << "\" " << s << " null" << endl;
+        }
         else if(uv == "//"){
             while(i < file_contents.length() && file_contents[i] != '\n'){
                 i++;
