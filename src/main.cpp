@@ -31,10 +31,10 @@ int main(int argc, char *argv[]) {
         cerr<<"$ ./your_program.sh tokenize test.lox"<<endl;
         for(auto u : file_contents){
             if(u == '('){
-                cerr<<"LEFT_PAREN ( null"<<endl;
+                cout<<"LEFT_PAREN ( null"<<endl;
             }
             else{
-                cerr<<"RIGHT_PAREN ( null"<<endl;
+                cout<<"RIGHT_PAREN ( null"<<endl;
             }
         }
         std::cout << "EOF  null" << std::endl; // Placeholder, replace this line when implementing the scanner
