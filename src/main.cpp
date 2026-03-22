@@ -333,6 +333,7 @@ int main(int argc, char* argv[]) {
         Parser parser(source);
         parser.parse();
         cout << parser.v << endl;
+        return 0;
     }
 
     cerr << "Unknown command: " << command << endl;
