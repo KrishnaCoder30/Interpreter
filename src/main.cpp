@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
         uv += u;
         uv += v;
         if (u == ' ' || u == '\r' || u == '\t') {
-        // Ignore whitespace
+
         } else if (u == '\n') {
             ++line;
         }
@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
                 s += file_contents[i];
                 i++;
             }
-            cout << "STRING " << "\"" << s << "\" " << s  << endl;
+            cout << "STRING " << "\"" << s << "\" " << s <<" null"  << endl;
         }
         else if(uv == "//"){
             while(i < file_contents.length() && file_contents[i] != '\n'){
