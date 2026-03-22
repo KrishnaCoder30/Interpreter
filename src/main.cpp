@@ -230,7 +230,7 @@ class Parser{
     }
 
     void Ans(string &s , int i , int j){
-        if(i == s.size()) return;
+        if(i > j) return;
         // 2 + 3 ==> (+ 2.0 3.0)
         // 2 + 3 * 4 ==> (+ 2.0 (* 3.0 4.0))
         // (5 - (3 - 1)) + -1 ==> (+ (group (- 5.0 (group (- 3.0 1.0)))) (- 1.0))
