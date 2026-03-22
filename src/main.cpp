@@ -81,7 +81,7 @@ private:
         string numStr = "";
         numStr += c;
         int ct = 0;
-        while(isAtEnd() && ((isdigit(peek())) || (peek() == '.' && ct == 0))){
+        while(!isAtEnd() && ((isdigit(peek())) || (peek() == '.' && ct == 0))){
             if(peek() == '.'){ 
                 ct++;
             }
