@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
                 s += file_contents[i];
                 i++;
             }
-            cout << "STRING " << "\"" << s << "\" " << s  << endl;
+            cout << "STRING " << "\"" << s << "\" " << s << endl;
         }
         else if(uv == "//"){
             while(i < file_contents.length() && file_contents[i] != '\n'){
