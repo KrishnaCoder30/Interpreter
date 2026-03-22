@@ -65,7 +65,7 @@ private:
         hasError = true;
     }
 
-    void scparseExprtring() {
+    void scanString() {
         string value;
         while (!isAtEnd() && peek() != '"') {
             if (peek() == '\n') line++;
@@ -134,7 +134,7 @@ private:
             return;
         }
         // strings
-        if (c == '"') { scparseExprtring(); return; }
+        if (c == '"') { scanString(); return; }
 
         // comments
         if (c == '/' && peek() == '/') {
@@ -219,136 +219,147 @@ const unordered_map<string, string> Scanner::reservedKeywords = {
     {"while", "WHILE"},
 };
 
-class Parser{
-    public:
-    string source;
-    int pos = 0;
-    string v = "";
+// ─── Parser (recursive descent on token stream) ────────────────────
+class Parser {
+public:
+    Parser(const vector<Token>& tokens) : tokens(tokens) {}
 
-    Parser(string source){
-        this->source = source;
+    string parse() {
+        string result = expression();
+        return result;
     }
 
-    void parseExpr(string &s , int i , int j){
-        if(i > j) return;
-        // 2 + 3 ==> (+ 2.0 3.0)
-        // 2 + 3 * 4 ==> (+ 2.0 (* 3.0 4.0))
-        // (5 - (3 - 1)) + -1 ==> (+ (group (- 5.0 (group (- 3.0 1.0)))) (- 1.0))
+private:
+    const vector<Token>& tokens;
+    int current = 0;
 
-        if(s[i] == '('){
-            int k = i+1;
-            int open = 1;
-            while(k <= j && open > 0){
-                if(s[k] == '(') open++;
-                if(s[k] == ')') open--;
-                k++;
-            }
-            if(k == j+1){
-                v += '(';
-                v += "group";
-                v += ' ';
-                parseExpr(s , i+1 , j-1);
-                v += ')';
-            }
-            else{
-                v += '(';
-                v += s[k];
-                v += ' ';
-                parseExpr(s , i ,k-1 );
-                v += ' ';
-                parseExpr(s , k+1 , j);
-                v += ')';
-            }
-        }
-        else if(s[i] == '"'){
-            string str = "";
-            i++;
-            while(i <= j && s[i] != '"'){
-                str += s[i];
-                i++;
-            }
-            if(i <= j){
-                v += str;
-                parseExpr(s , i+1 , j);
-            }
-            else{
-                v += str;
-            }
-        }
-        else if(isdigit(s[i]) || (s[i] == '-' && isdigit(s[i+1]))){
-            string num = "";
-            if(s[i] == '-'){
-                num += s[i];
-                i++;
-            }
-            int ct = 0;
-            while(i <= j && ((isdigit(s[i]) || (s[i] == '.' && ct == 0)))){
-                if(s[i] == '.') ct++;
-                num += s[i];
-                i++;
-            }
-            
-            while(ct && num[num.size()-1] == '0'){
-                num.pop_back();
-            }
-            if(num[num.size()-1] == '.'){
-                ct = 0;
-                num.pop_back();
-            }
-            if(ct == 0){
-                num += ".0";
-            }
-            if(i <= j){
-                v += s[i];
-                v += ' ';
-                v += num;
-                parseExpr(s , i+1 , j);
-            }
-            else{
-                v += num;
-            }
-        }
-        else{
-            string id = "";
-            while(i <= j && isalpha(s[i])){
-                id += s[i];
-                i++;
-            }
-            if(i <= j){
-                v += id;
-                parseExpr(s , i+1 , j);
-            }
-            else{
-                v += id;
-            }
-        }
-        
+    // ── Token helpers ──────────────────────────────────────────────
+    const Token& peek() const { return tokens[current]; }
+
+    const Token& previous() const { return tokens[current - 1]; }
+
+    bool isAtEnd() const { return peek().type == "EOF"; }
+
+    const Token& advance() {
+        if (!isAtEnd()) current++;
+        return previous();
     }
 
-
-
-    void parse(){
-        if(source == "true"){
-            v = "true";
-            return;
-        }
-        if(source == "false"){
-            v = "false";
-            return;
-        }
-        if(source == "nil"){
-            v = "nil";
-            return;
-        }
-        // if(source[0] == '"' && source[source.size()-1] == '"'){
-        //     v = source.substr(1 , source.size()-2);
-        //     return;
-        // }
-        parseExpr(source , 0 , source.size()-1);
+    bool check(const string& type) const {
+        return !isAtEnd() && peek().type == type;
     }
 
-    
-    
+    bool match(const initializer_list<string>& types) {
+        for (const auto& t : types) {
+            if (check(t)) { advance(); return true; }
+        }
+        return false;
+    }
+
+    Token consume(const string& type, const string& message) {
+        if (check(type)) return advance();
+        cerr << message << endl;
+        exit(65);
+    }
+
+    // ── Format a number: strip trailing zeros but keep at least X.0 ─
+    static string formatNumber(const string& literal) {
+        double val = stod(literal);
+        ostringstream oss;
+        oss << val;
+        string s = oss.str();
+        // Ensure there's always a decimal point
+        if (s.find('.') == string::npos) s += ".0";
+        return s;
+    }
+
+    // ── Grammar rules (lowest to highest precedence) ──────────────
+    // expression → equality
+    string expression() {
+        return equality();
+    }
+
+    // equality → comparison ( ( "!=" | "==" ) comparison )*
+    string equality() {
+        string left = comparison();
+        while (match({"BANG_EQUAL", "EQUAL_EQUAL"})) {
+            string op = previous().lexeme;
+            string right = comparison();
+            left = "(" + op + " " + left + " " + right + ")";
+        }
+        return left;
+    }
+
+    // comparison → term ( ( ">" | ">=" | "<" | "<=" ) term )*
+    string comparison() {
+        string left = term();
+        while (match({"GREATER", "GREATER_EQUAL", "LESS", "LESS_EQUAL"})) {
+            string op = previous().lexeme;
+            string right = term();
+            left = "(" + op + " " + left + " " + right + ")";
+        }
+        return left;
+    }
+
+    // term → factor ( ( "-" | "+" ) factor )*
+    string term() {
+        string left = factor();
+        while (match({"MINUS", "PLUS"})) {
+            string op = previous().lexeme;
+            string right = factor();
+            left = "(" + op + " " + left + " " + right + ")";
+        }
+        return left;
+    }
+
+    // factor → unary ( ( "/" | "*" ) unary )*
+    string factor() {
+        string left = unary();
+        while (match({"SLASH", "STAR"})) {
+            string op = previous().lexeme;
+            string right = unary();
+            left = "(" + op + " " + left + " " + right + ")";
+        }
+        return left;
+    }
+
+    // unary → ( "!" | "-" ) unary | primary
+    string unary() {
+        if (match({"BANG", "MINUS"})) {
+            string op = previous().lexeme;
+            string right = unary();
+            return "(" + op + " " + right + ")";
+        }
+        return primary();
+    }
+
+    // primary → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")"
+    string primary() {
+        if (match({"FALSE"})) return "false";
+        if (match({"TRUE"}))  return "true";
+        if (match({"NIL"}))   return "nil";
+
+        if (match({"NUMBER"})) {
+            return formatNumber(previous().literal);
+        }
+
+        if (match({"STRING"})) {
+            return previous().literal;
+        }
+
+        if (match({"IDENTIFIER"})) {
+            return previous().lexeme;
+        }
+
+        if (match({"LEFT_PAREN"})) {
+            string expr = expression();
+            consume("RIGHT_PAREN", "Expect ')' after expression.");
+            return "(group " + expr + ")";
+        }
+
+        cerr << "Unexpected token: " << peek().lexeme << endl;
+        exit(65);
+    }
 };
 
 
@@ -385,9 +396,10 @@ int main(int argc, char* argv[]) {
     }
     else if(command == "parse"){
         string source = readFile(argv[2]);
-        Parser parser(source);
-        parser.parse();
-        cout << parser.v << endl;
+        Scanner scanner(source);
+        scanner.scanTokens();
+        Parser parser(scanner.getTokens());
+        cout << parser.parse() << endl;
         return 0;
     }
 
