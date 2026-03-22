@@ -56,11 +56,11 @@ int main(int argc, char *argv[]) {
       }
     }
 
+    std::cout << "EOF  null" << std::endl;
     if (has_error) {
         return 65;
     }
 
-    std::cout << "EOF  null" << std::endl;
 
     return 0;
   } else {
