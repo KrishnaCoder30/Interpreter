@@ -1,140 +1,170 @@
-#include <cstring>
 #include <fstream>
 #include <iostream>
-#include <map>
 #include <sstream>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 using namespace std;
 
-std::string read_file_contents(const std::string &filename);
-
-class Token {
-    public:
+// ─── Token ──────────────────────────────────────────────────────────
+struct Token {
     string type;
     string lexeme;
     string literal;
-    int line;
-    string toString() {
-        if(type != "ERROR"){
-            return type + " " + lexeme + " " + literal;
-        }
-        else {
-            return "[line " + to_string(line) + "] Error: " + lexeme;
-        }
-    }
 
-    Token(string type, string lexeme, string literal, int line) {
-        this->type = type;
-        this->lexeme = lexeme;
-        this->literal = literal;
-        this->line = line;
+    string toString() const {
+        return type + " " + lexeme + " " + literal;
     }
-    
 };
 
-int main(int argc, char *argv[]) {
-  std::cout << std::unitbuf;
-  std::cerr << std::unitbuf;
+// ─── Scanner ────────────────────────────────────────────────────────
+class Scanner {
+public:
+    Scanner(const string& source) : source(source) {}
 
-  if (argc < 3) {
-    std::cerr << "Usage: ./your_program tokenize <filename>" << std::endl;
-    return 1;
-  }
+    bool scanTokens() {
+        while (!isAtEnd()) {
+            scanToken();
+        }
+        tokens.push_back({"EOF", "", "null"});
+        return !hasError;
+    }
 
-  const std::string command = argv[1];
-  unordered_map<char, string> token = {
-    {'{', "LEFT_BRACE"},
-    {'}' , "RIGHT_BRACE"},
-    {'(' , "LEFT_PAREN"},
-    {')' , "RIGHT_PAREN"},
-    {'*' , "STAR"},
-    {'.' , "DOT"},
-    {'+' , "PLUS"},
-    {',' , "COMMA"},
-    {'-' , "MINUS"},
-    {';' , "SEMICOLON"},
-    {'=' , "EQUAL"},
-    {'!' , "BANG"},
-    {'<' , "LESS"},
-    {'>' , "GREATER"},
-    {'/' , "SLASH"}
-  };
-  unordered_map<string, string> token2 = {
-    {"<=" , "LESS_EQUAL"},
-    {"!=" , "BANG_EQUAL"},
-    {">=" , "GREATER_EQUAL"},
-    {"==" , "EQUAL_EQUAL"},
-    {"//" , "BREAK"}
-  };
+    const vector<Token>& getTokens() const { return tokens; }
 
-  if (command == "tokenize") {
-    std::string file_contents = read_file_contents(argv[2]);
-
+private:
+    string source;
+    int pos = 0;
     int line = 1;
-    bool has_error = false;
+    bool hasError = false;
 
-    for(int i = 0; i < file_contents.length(); i++) {
-        char u = file_contents[i];
-        string uv = "";
-        uv += u;
-        if (i + 1 < file_contents.length()) {
-            uv += file_contents[i + 1];
-        }
-        if (u == ' ' || u == '\r' || u == '\t') {
+    static const unordered_map<char, string> singleCharTokens;
+    static const unordered_map<string, string> twoCharTokens;
 
-        } else if (u == '\n') {
-            ++line;
-        }
-        else if(u == '"'){
-            string s = "";
-            i++;
-            while(i < file_contents.length() && file_contents[i] != '"'){
-                s += file_contents[i];
-                i++;
-            }
-            if(i >= file_contents.length()){
-                cerr <<"[line " << line << "] Error: Unterminated string." << endl;
-                has_error = true;
-            } else {
-                cout << "STRING " << "\"" << s << "\" " << s << endl;
-            }
-        }
-        else if(uv == "//"){
-            while(i < file_contents.length() && file_contents[i] != '\n'){
-                i++;
-            }
-            ++line;
-        }
-        else if(token2.count(uv)){
-            cout << token2[uv] << " " << uv << " null" << endl;
-            i++;
-        }
-        else if (token.count(u)) {
-            cout << token[u] << " " << u << " null" << endl;
-        } else {
-            cerr <<"[line " << line << "] Error: Unexpected character: " << u << endl;
-            has_error = true;
-        }
+    bool isAtEnd() const { return pos >= (int)source.length(); }
+
+    char advance() { return source[pos++]; }
+
+    char peek() const { return isAtEnd() ? '\0' : source[pos]; }
+
+    bool match(char expected) {
+        if (isAtEnd() || source[pos] != expected) return false;
+        pos++;
+        return true;
     }
 
-    std::cout << "EOF  null" << std::endl;
-    if (has_error) {
-        return 65;
+    void addToken(const string& type, const string& lexeme, const string& literal = "null") {
+        tokens.push_back({type, lexeme, literal});
     }
 
+    void error(const string& message) {
+        cerr << "[line " << line << "] Error: " << message << endl;
+        hasError = true;
+    }
 
-    return 0;
-  } else {
-    cerr << "Usage: ./your_program tokenize <filename>" << endl;
-    return 1;
-  }
+    void scanString() {
+        string value;
+        while (!isAtEnd() && peek() != '"') {
+            if (peek() == '\n') line++;
+            value += advance();
+        }
+        if (isAtEnd()) {
+            error("Unterminated string.");
+            return;
+        }
+        advance(); // closing "
+        addToken("STRING", "\"" + value + "\"", value);
+    }
+
+    void scanToken() {
+        char c = advance();
+
+        // whitespace
+        if (c == ' ' || c == '\r' || c == '\t') return;
+        if (c == '\n') { line++; return; }
+
+        // strings
+        if (c == '"') { scanString(); return; }
+
+        // comments
+        if (c == '/' && peek() == '/') {
+            while (!isAtEnd() && peek() != '\n') advance();
+            return;
+        }
+
+        // two-character operators
+        string twoChar = string(1, c) + peek();
+        auto it2 = twoCharTokens.find(twoChar);
+        if (it2 != twoCharTokens.end()) {
+            advance(); // consume second char
+            addToken(it2->second, twoChar);
+            return;
+        }
+
+        // single-character tokens
+        auto it1 = singleCharTokens.find(c);
+        if (it1 != singleCharTokens.end()) {
+            addToken(it1->second, string(1, c));
+            return;
+        }
+
+        // unexpected character
+        error("Unexpected character: " + string(1, c));
+    }
+
+    vector<Token> tokens;
+};
+
+// ─── Static token maps ─────────────────────────────────────────────
+const unordered_map<char, string> Scanner::singleCharTokens = {
+    {'(', "LEFT_PAREN"},  {')', "RIGHT_PAREN"},
+    {'{', "LEFT_BRACE"},  {'}', "RIGHT_BRACE"},
+    {'*', "STAR"},        {'.', "DOT"},
+    {'+', "PLUS"},        {'-', "MINUS"},
+    {',', "COMMA"},       {';', "SEMICOLON"},
+    {'=', "EQUAL"},       {'!', "BANG"},
+    {'<', "LESS"},        {'>', "GREATER"},
+    {'/', "SLASH"},
+};
+
+const unordered_map<string, string> Scanner::twoCharTokens = {
+    {"==", "EQUAL_EQUAL"}, {"!=", "BANG_EQUAL"},
+    {"<=", "LESS_EQUAL"},  {">=", "GREATER_EQUAL"},
+};
+
+// ─── Helpers ────────────────────────────────────────────────────────
+string readFile(const string& path) {
+    ifstream ifs(path);
+    stringstream ss;
+    ss << ifs.rdbuf();
+    return ss.str();
 }
 
-std::string read_file_contents(const std::string &filename) {
-  std::ifstream ifs(filename);
-  std::stringstream ss;
-  ss << ifs.rdbuf();
-  return ss.str();
+// ─── Main ───────────────────────────────────────────────────────────
+int main(int argc, char* argv[]) {
+    cout << unitbuf;
+    cerr << unitbuf;
+
+    if (argc < 3) {
+        cerr << "Usage: ./your_program tokenize <filename>" << endl;
+        return 1;
+    }
+
+    string command = argv[1];
+
+    if (command == "tokenize") {
+        string source = readFile(argv[2]);
+        Scanner scanner(source);
+        bool ok = scanner.scanTokens();
+
+        for (const auto& tok : scanner.getTokens()) {
+            cout << tok.toString() << endl;
+        }
+
+        return ok ? 0 : 65;
+    }
+
+    cerr << "Unknown command: " << command << endl;
+    return 1;
 }
