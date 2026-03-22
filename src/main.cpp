@@ -34,13 +34,15 @@ int main(int argc, char *argv[]) {
     {'=' , "EQUAL"},
     {'!' , "BANG"},
     {'<' , "LESS"},
-    {'>' , "GREATER"}
+    {'>' , "GREATER"},
+    {'/' , "SLASH"}
   };
   unordered_map<string, string> token2 = {
     {"<=" , "LESS_EQUAL"},
     {"!=" , "BANG_EQUAL"},
     {">=" , "GREATER_EQUAL"},
     {"==" , "EQUAL_EQUAL"},
+    {"//" , "BREAK"}
   };
   if (command == "tokenize") {
     std::string file_contents = read_file_contents(argv[2]);
@@ -57,6 +59,12 @@ int main(int argc, char *argv[]) {
         if (u == ' ' || u == '\r' || u == '\t') {
         // Ignore whitespace
         } else if (u == '\n') {
+            ++line;
+        }
+        else if(uv == "//"){
+            while(file_contents[i] != '\n'){
+                i++;
+            }
             ++line;
         }
         else if(token2.count(uv)){
