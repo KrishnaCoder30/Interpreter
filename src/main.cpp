@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
       } else if (u == '\n') {
         ++line;
       } else {
-        cerr << line << "] Error: Unexpected character: " << u << endl;
+        cerr <<"[line " << line << "] Error: Unexpected character: " << u << endl;
         has_error = true;
       }
     }
