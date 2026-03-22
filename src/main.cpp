@@ -32,13 +32,14 @@ int main(int argc, char *argv[]) {
     {'-' , "MINUS"},
     {';' , "SEMICOLON"},
     {'=' , "EQUAL"},
-    {'!' , "BANG"}
+    {'!' , "BANG"},
+    {'<' , "LESS"},
+    {'>' , "GREATER"}
   };
   unordered_map<string, string> token2 = {
     {"<=" , "LESS_EQUAL"},
     {"!=" , "BANG_EQUAL"},
-    {"<=" , "LESS_EQUAL"},
-    {"<=" , "LESS_EQUAL"},
+    {">=" , "GREATER_EQUAL"},
     {"==" , "EQUAL_EQUAL"},
   };
   if (command == "tokenize") {
