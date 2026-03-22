@@ -60,6 +60,8 @@ int main(int argc, char *argv[]) {
         return 65;
     }
 
+    std::cout << "EOF  null" << std::endl;
+
     return 0;
   } else {
     cerr << "Usage: ./your_program tokenize <filename>" << endl;
