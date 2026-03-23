@@ -1,11 +1,19 @@
-var foo;
-var b;
-var a = b = 2;
-foo = 1;
+var a = "global a";
+var b = "global b";
+var c = "global c";
+{
+  var a = "outer a";
+  var b = "outer b";
+  {
+    var a = "inner a";
+    print a;
+    print b;
+    print c;
+  }
+  print a;
+  print b;
+  print c;
+}
 print a;
-print foo;
-b = foo = 3;
 print b;
-print foo = 2;
-foo = b;
-print foo;
+print c;

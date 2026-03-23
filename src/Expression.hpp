@@ -1,9 +1,9 @@
+#pragma once
 #include <iostream>
 using namespace std;
 #include "Token.hpp"
 #include "Value.hpp"
 #include "Enviroment.hpp"
-#pragma once
 
 struct Expr {
     // interface
@@ -173,7 +173,7 @@ class AssignExpr : public Expr{
 
     LoxValue evaluate(){
         LoxValue val = expr->evaluate();
-        env.assign(name , val);
+        tree->assign(name , val);
         return val;
     }
 };
@@ -190,7 +190,7 @@ class VariableExpr : public Expr{
     }
 
     LoxValue evaluate(){
-        return env.get(name);
+        return tree->get(name);
     }
 
 };

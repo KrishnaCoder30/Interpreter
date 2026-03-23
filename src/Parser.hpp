@@ -1,6 +1,5 @@
-#include <string>
-#include <variant>
 #pragma once
+#include <string>
 #include "Token.hpp"
 #include "Value.hpp"
 #include "Expression.hpp"
@@ -32,6 +31,9 @@ private:
         if(match({TokenType::PRINT})){
             return printStatement();
         }
+        else if(match({TokenType::LEFT_BRACE})){
+            return new BlockStmt(block());
+        }
         else{
             return expressionStatement();
         }
@@ -51,6 +53,8 @@ private:
         return new VarStmt(name , expr);
     }
 
+
+
     Stmt* Declaration(){
         // cout<<"In Declaration"<<endl;
         if(match({TokenType::VAR})){
@@ -59,6 +63,16 @@ private:
         else{
             return Statement();
         }
+    }
+
+    vector<Stmt*> block(){
+        vector<Stmt*> stmt;
+        while(!check(TokenType::RIGHT_BRACE) && !isAtEnd()){
+            stmt.push_back(Declaration());
+        }
+        consume(TokenType::RIGHT_BRACE, "Expect '}' at the end of Block");
+
+        return stmt;
     }
 
     Expr* expression() {

@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include "Enviroment.hpp"
@@ -57,10 +56,39 @@ public:
 
     void execute() override{
         LoxValue val = intializer == NULL ? nil{} : intializer->evaluate();
-        env.define(name, val);
+        tree->define(name, val);
     }
 
     string toString() override{
         return ("name = " + name.toString() + " expression = " + intializer->toString());
+    }
+};
+
+class BlockStmt : public Stmt{
+    vector<Stmt*> stmt;
+    public:
+
+    BlockStmt(vector<Stmt*> stmt) : stmt(stmt) {}
+
+    string toString() override{
+        string ans = "";
+        for(auto u : stmt){
+            ans += u->toString();
+            ans += "\n";
+        }
+        return ans;
+    }
+
+    void execute() override{
+        Enviroment* parentBlock = tree;
+
+        tree = new Enviroment(parentBlock);
+
+        for(auto u : stmt){
+            u->execute();
+        }
+
+        // execution complete fo back to parent
+        tree = parentBlock;
     }
 };

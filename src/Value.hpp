@@ -1,8 +1,8 @@
+#pragma once
 #include <iostream>
 #include <string>
 #include <variant>
 #include <variant>  // Both variant and monostate live here
-#pragma once
 using namespace std;
 
 // Define the "Nil" type
