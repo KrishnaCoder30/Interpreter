@@ -49,7 +49,16 @@ int main(int argc, char *argv[]) {
     Scanner scanner(source);
     scanner.scanTokens();
     Parser parser(scanner.getTokens());
-    cout << parser.parse() << endl;
+    cout << parser.parse()->toString() << endl;
+    return 0;
+  }
+  else if(command == "evaluate"){
+    string source = readFile(argv[2]);
+    Scanner scanner(source);
+    scanner.scanTokens();
+    Parser parser(scanner.getTokens());
+    Expr* expr = parser.parse();
+    cout << expr->evaluate() <<endl;
     return 0;
   }
 

@@ -1,4 +1,4 @@
-#include<iostream>
+#include <iostream>
 using namespace std;
 #include "Token.hpp"
 
@@ -10,7 +10,7 @@ public:
     while (!isAtEnd()) {
       scanToken();
     }
-    tokens.push_back({"EOF", "", "null"});
+    tokens.push_back({TokenType::EOF_TOKEN, "", "null"});
     return !hasError;
   }
 
@@ -22,10 +22,10 @@ private:
   int line = 1;
   bool hasError = false;
 
-  static const unordered_map<char, string> singleCharTokens;
-  static const unordered_map<string, string> twoCharTokens;
+  static const unordered_map<char, TokenType> singleCharTokens;
+  static const unordered_map<string, TokenType> twoCharTokens;
   static const unordered_map<char, string> unExpectedTokens;
-  static const unordered_map<string, string> reservedKeywords;
+  static const unordered_map<string, TokenType> reservedKeywords;
 
   bool isAtEnd() const { return pos >= (int)source.length(); }
 
@@ -40,7 +40,7 @@ private:
     return true;
   }
 
-  void addToken(const string &type, const string &lexeme,
+  void addToken(const TokenType &type, const string &lexeme,
                 const string &literal = "null") {
     tokens.push_back({type, lexeme, literal});
   }
@@ -62,7 +62,7 @@ private:
       return;
     }
     advance(); // closing "
-    addToken("STRING", "\"" + value + "\"", value);
+    addToken(TokenType::STRING, "\"" + value + "\"", value);
   }
 
   void scanNumber(char c) {
@@ -90,7 +90,7 @@ private:
       literal = numStr + ".0";
     }
 
-    addToken("NUMBER", lexemme, literal);
+    addToken(TokenType::NUMBER, lexemme, literal);
   }
 
   void scanIdentifier(char c) {
@@ -105,7 +105,7 @@ private:
       addToken(it->second, identifier);
       return;
     }
-    addToken("IDENTIFIER", identifier, "null");
+    addToken(TokenType::IDENTIFIER, identifier, "null");
   }
 
   void scanToken() {
@@ -167,19 +167,22 @@ private:
 };
 
 // ─── Static token maps ─────────────────────────────────────────────
-const unordered_map<char, string> Scanner::singleCharTokens = {
-    {'(', "LEFT_PAREN"},  {')', "RIGHT_PAREN"}, {'{', "LEFT_BRACE"},
-    {'}', "RIGHT_BRACE"}, {'*', "STAR"},        {'.', "DOT"},
-    {'+', "PLUS"},        {'-', "MINUS"},       {',', "COMMA"},
-    {';', "SEMICOLON"},   {'=', "EQUAL"},       {'!', "BANG"},
-    {'<', "LESS"},        {'>', "GREATER"},     {'/', "SLASH"},
+const unordered_map<char, TokenType> Scanner::singleCharTokens = {
+    {'(', TokenType::LEFT_PAREN}, {')', TokenType::RIGHT_PAREN},
+    {'{', TokenType::LEFT_BRACE}, {'}', TokenType::RIGHT_BRACE},
+    {'*', TokenType::STAR},       {'.', TokenType::DOT},
+    {'+', TokenType::PLUS},       {'-', TokenType::MINUS},
+    {',', TokenType::COMMA},      {';', TokenType::SEMICOLON},
+    {'=', TokenType::EQUAL},      {'!', TokenType::BANG},
+    {'<', TokenType::LESS},       {'>', TokenType::GREATER},
+    {'/', TokenType::SLASH},
 };
 
-const unordered_map<string, string> Scanner::twoCharTokens = {
-    {"==", "EQUAL_EQUAL"},
-    {"!=", "BANG_EQUAL"},
-    {"<=", "LESS_EQUAL"},
-    {">=", "GREATER_EQUAL"},
+const unordered_map<string, TokenType> Scanner::twoCharTokens = {
+    {"==", TokenType::EQUAL_EQUAL},
+    {"!=", TokenType::BANG_EQUAL},
+    {"<=", TokenType::LESS_EQUAL},
+    {">=", TokenType::GREATER_EQUAL},
 };
 
 const unordered_map<char, string> Scanner::unExpectedTokens = {
@@ -187,13 +190,13 @@ const unordered_map<char, string> Scanner::unExpectedTokens = {
     {'&', "AMPERSAND"}, {'$', "DOLLAR"}, {'~', "TILDE"},
     {'^', "CARET"},     {'|', "BAR"},    {'\\', "BACKSLASH"}};
 
-const unordered_map<string, string> Scanner::reservedKeywords = {
-    // and, class, else, false, for, fun, if, nil, or, print, return, super,
-    // this, true, var, while
-    {"and", "AND"},     {"class", "CLASS"},   {"else", "ELSE"},
-    {"false", "FALSE"}, {"for", "FOR"},       {"fun", "FUN"},
-    {"if", "IF"},       {"nil", "NIL"},       {"or", "OR"},
-    {"print", "PRINT"}, {"return", "RETURN"}, {"super", "SUPER"},
-    {"this", "THIS"},   {"true", "TRUE"},     {"var", "VAR"},
-    {"while", "WHILE"},
+const unordered_map<string, TokenType> Scanner::reservedKeywords = {
+    {"and", TokenType::AND},       {"class", TokenType::CLASS},
+    {"else", TokenType::ELSE},     {"false", TokenType::FALSE},
+    {"for", TokenType::FOR},       {"fun", TokenType::FUN},
+    {"if", TokenType::IF},         {"nil", TokenType::NIL},
+    {"or", TokenType::OR},         {"print", TokenType::PRINT},
+    {"return", TokenType::RETURN}, {"super", TokenType::SUPER},
+    {"this", TokenType::THIS},     {"true", TokenType::TRUE},
+    {"var", TokenType::VAR},       {"while", TokenType::WHILE},
 };

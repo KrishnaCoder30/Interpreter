@@ -1,16 +1,43 @@
 #include "Token.hpp"
-
+#include "Value.hpp"
+#include <string>
+#include <variant>
+using namespace std;
 struct Expr{
     // interface
     virtual ~Expr() = default;
     virtual string toString() = 0;
-
+    virtual LoxValue evaluate() = 0;
 };
 
 struct Literal : Expr{
-    string value;
-    Literal(string value) : value(value) {}
+    LoxValue value;
+    Literal(LoxValue value) : value(value) {}
     string toString() override {
+        if(holds_alternative<bool>(value)) return (get<bool>(value) == 1 ? "true" : "false" );
+        if(holds_alternative<nil>(value)) return "nil";
+        if(holds_alternative<double>(value)){
+            string str = to_string(get<double>(value));
+
+            if (str.find('.') != string::npos) {
+                while (!str.empty() && str.back() == '0') {
+                    str.pop_back();
+                }
+                if (!str.empty() && str.back() == '.') {
+                    str.pop_back();
+                }
+            }
+
+            if(str.find('.') == string::npos){
+                str += ".0";
+            }
+            return str;
+            
+        }
+        return get<string>(value);
+    }
+
+    LoxValue evaluate() override{
         return value;
     }
 };
@@ -21,7 +48,31 @@ struct Grouping : Expr{
     string toString() override {
         return "(group " + expr->toString() + ")";
     }
+
+    LoxValue evaluate() override{
+        return expr->evaluate();
+    }
 };
+
+bool isNumber(const LoxValue& v) {
+        return std::holds_alternative<double>(v);
+    }
+
+    double getD(const LoxValue& x){
+        if(isNumber(x))
+            return get<double>(x);
+        cerr<<"String can't be used for evaluation of Expression.Runtime Error";
+        exit(70);
+    }
+
+    string getS(const LoxValue &x){
+        if(holds_alternative<string>(x)){
+            return get<string> (x);
+        }
+        exit(70);
+
+    }
+
 
 struct Binary : Expr{
     Expr* left;
@@ -30,6 +81,42 @@ struct Binary : Expr{
     Binary(Expr* left, Token op, Expr* right) : left(left), op(op), right(right) {}
     string toString() override {
         return  "(" + op.lexeme + " " + left->toString() + " " + right->toString() + ")";
+    }
+
+    
+
+    LoxValue evaluate() override{
+        LoxValue l = left->evaluate();
+        LoxValue r = right->evaluate();
+
+        switch (op.type) {
+            // Arithmetic
+            case TokenType::PLUS:          
+                    if((holds_alternative<string>(l) && holds_alternative<string>(r)) ) {
+                        return getS(l) + getS(r);
+                    }
+                    else if((holds_alternative<double>(l) && holds_alternative<double>(r))){
+                        return getD(l) + getD(r);
+                    }
+                    else{
+                        cerr<<"Invalid Expression!!"<<endl;
+                        exit(70);
+                    }
+            case TokenType::MINUS:         return getD(l) - getD(r);
+            case TokenType::STAR:          return getD(l) * getD(r);
+            case TokenType::SLASH:         return getD(l) / getD(r);
+
+            // Comparison (returns a boolean LoxValue)
+            case TokenType::GREATER:       return getD(l) > getD(r);
+            case TokenType::GREATER_EQUAL: return getD(l) >= getD(r);
+            case TokenType::LESS:          return getD(l) < getD(r);
+            case TokenType::LESS_EQUAL:    return getD(l) <= getD(r);
+            case TokenType::EQUAL_EQUAL:   return l == r;
+            case TokenType::BANG_EQUAL:    return l != r;
+            default:
+                // Handle error: Unreachable or invalid operator
+                return LoxValue(); 
+        }
     }
 };
 
@@ -42,6 +129,32 @@ struct Unary : Expr{
     string toString() override { 
         return "(" + op.lexeme + " " + child->toString() + ")";
     }
+
+    LoxValue evaluate() override{
+        LoxValue val = child->evaluate();
+        switch(op.type){
+            case TokenType::BANG :
+                if((holds_alternative<bool>(val) && get<bool>(val) == false) || holds_alternative<nil>(val)){
+                    return true;
+                }
+                else{
+                    return false;
+                }
+            case TokenType::MINUS:
+                if(holds_alternative<double>(val)){
+                    return -getD(val);
+                }
+                else{
+                    cerr<<"Negation of String is not Possible.Runtime Error"<<endl;
+                    exit(70);
+                }
+
+            default:
+                return nil{};
+        }
+
+    }
+
 };
 
 
@@ -59,7 +172,7 @@ class Parser{
         }
 
         bool isAtEnd(){
-            return (peek().type == "EOF");
+            return (peek().type == TokenType::EOF_TOKEN);
         }
 
         Token previous(){
@@ -71,12 +184,12 @@ class Parser{
             return previous();
         }
 
-        bool check(string type){
+        bool check(TokenType type){
             if(isAtEnd()) return false;
             return peek().type == type;
         }
 
-        bool match(vector<string> type){
+        bool match(vector<TokenType> type){
             for(auto u : type){
                 if(check(u)){ 
                     advance();
@@ -86,7 +199,7 @@ class Parser{
             return 0;
         }
 
-        Token consume(string type , string message){
+        Token consume(TokenType type , string message){
             if(check(type)) return advance();
             cerr<< message << endl;
             exit(65);
@@ -96,17 +209,19 @@ class Parser{
 
         Expr* primary(){
             // if false found at base 
-            if(match({"FALSE"})) return new Literal("False");
+            if(match({TokenType::FALSE})) return new Literal(false);
             // if true found at base
-            if(match({"TRUE"})) return new Literal("true");
+            if(match({TokenType::TRUE})) return new Literal(true);
             // if NIL found at base
-            if(match({"NIL"})) return new Literal("nil");
+            if(match({TokenType::NIL})) return new Literal(nil{});
             // if string or number is found at base return that string or value
-            if(match({"STRING" , "NUMBER"})) return new Literal(previous().literal);
+            if(match({TokenType::NUMBER})) return new Literal(stod(previous().literal));
+
+            if(match({TokenType::STRING})) return new Literal(previous().literal);
             
-            if(match({"LEFT_PAREN"})){
+            if(match({TokenType::LEFT_PAREN})){
                 Expr* expr = expression();
-                consume("RIGHT_PAREN", "Expect ')' after expression.");
+                consume(TokenType::RIGHT_PAREN, "Expect ')' after expression.");
                 return new Grouping(expr);
             }
             cerr<<"Expect expression."<<endl;
@@ -114,7 +229,7 @@ class Parser{
         }
 
         Expr* unary(){
-            if(match({"BANG" , "MINUS"})){
+            if(match({TokenType::BANG , TokenType::MINUS})){
                 return new Unary(unary() , previous());
             }
             return primary();
@@ -123,7 +238,7 @@ class Parser{
         Expr* factor(){
             Expr* left = unary();
             Token op;
-            while(match({"SLASH" , "STAR"})){
+            while(match({TokenType::SLASH , TokenType::STAR})){
                 op = previous();
                 Expr* right = unary();
                 left = new Binary(left , op , right);
@@ -134,7 +249,7 @@ class Parser{
         Expr* term(){
             Expr* left = factor();
             Token op;
-            while(match({"PLUS" , "MINUS"})){
+            while(match({TokenType::PLUS , TokenType::MINUS})){
                 op = previous();
                 Expr* right = factor();
                 left = new Binary(left , op , right);
@@ -145,7 +260,7 @@ class Parser{
         Expr* comparison(){
             Expr* left = term();
             Token op;
-            while(match({"LESS_EQUAL" , "LESS" , "GREATER" , "GREATER_EQUAL"})){
+            while(match({TokenType::LESS_EQUAL , TokenType::LESS , TokenType::GREATER , TokenType::GREATER_EQUAL})){
                 op = previous();
                 Expr* right = term();
                 left = new Binary(left , op , right);
@@ -156,7 +271,7 @@ class Parser{
         Expr* equality(){
             Expr* left = comparison();
             Token op;
-            while(match({"EQUAL_EQUAL" , "BANG_EQUAL"})){
+            while(match({TokenType::EQUAL_EQUAL , TokenType::BANG_EQUAL})){
                 op = previous();
                 Expr* right = comparison();
                 left = new Binary(left , op , right);
