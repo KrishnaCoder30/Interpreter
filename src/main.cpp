@@ -57,6 +57,16 @@ int main(int argc, char* argv[]) {
         Expr* expr = parser.parse();
         cout << expr->evaluate() << endl;
         return 0;
+    } else if (command == "run") {
+        string source = readFile(argv[2]);
+        Scanner scanner(source);
+        scanner.scanTokens();
+        Parser parser(scanner.getTokens());
+        vector<Stmt*> statements = parser.run();
+        for (auto u : statements) {
+            u->execute();
+        }
+        return 0;
     }
 
     cerr << "Unknown command: " << command << endl;
