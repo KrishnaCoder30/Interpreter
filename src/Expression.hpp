@@ -160,10 +160,28 @@ struct Unary : Expr {
     }
 };
 
+class AssignExpr : public Expr{
+    Token name;
+    Expr* expr;
+    public:
+
+    AssignExpr(Token name , Expr* expr) : name(name) , expr(expr) {}
+
+    string toString(){
+        return "name = " + name.toString();
+    }
+
+    LoxValue evaluate(){
+        LoxValue val = expr->evaluate();
+        env.assign(name , val);
+        return val;
+    }
+};
+
 class VariableExpr : public Expr{
+    public:
     Token name;
 
-    public:
 
     VariableExpr(Token name) : name(name) {}
 

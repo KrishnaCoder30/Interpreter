@@ -13,21 +13,21 @@ private:
     int curr = 0;
     vector<Token> tokens;
 
-    vector<Stmt*> expressionStatement(){
+    Stmt* expressionStatement(){
         // cout<<"In expressionStatement"<<endl;
         Expr* expr = expression();
         consume(TokenType::SEMICOLON , "Expected ; at the end of line");
-        return {new ExpressionStmt(expr)};
+        return new ExpressionStmt(expr);
     }
 
-    vector<Stmt*> printStatement(){
+    Stmt* printStatement(){
         // cout<<"In printStatement"<<endl;
         Expr* expr = expression();
         consume(TokenType::SEMICOLON , "Expected ; at the end of line");
-        return {new PrintStmt(expr)};
+        return new PrintStmt(expr);
     }
 
-    vector<Stmt*> Statement(){
+    Stmt* Statement(){
         // cout<<"In Statement"<<endl;
         if(match({TokenType::PRINT})){
             return printStatement();
@@ -37,32 +37,21 @@ private:
         }
     }
 
-    vector<Stmt*> varDeclaration(){
+    Stmt* varDeclaration(){
         // cout<<"In varDeclaration"<<endl;
         Token name = consume(TokenType::IDENTIFIER, "Variable Naming is not Valid!!");
         Expr* expr = NULL;
-        vector<Token> tokens;
-        tokens.push_back(name);
-        int found = 0;
-        while(match({TokenType::EQUAL})){  
-            found = 1;
-            if(match({TokenType::IDENTIFIER})){
-                tokens.push_back(previous());
-            }
-        }
-        if(found)
+        if(match({TokenType::EQUAL})){  
+          
             expr = expression();
+        }
 
         consume(TokenType::SEMICOLON , "Semicolon is expected after variable declaration.");
-        vector<Stmt*> variable ;
-        for(auto u : tokens){
-            variable.push_back(new VarStmt(u , expr));
-        }
         // cout<<variable->toString()<<endl;
-        return variable;
+        return new VarStmt(name , expr);
     }
 
-    vector<Stmt*> Declaration(){
+    Stmt* Declaration(){
         // cout<<"In Declaration"<<endl;
         if(match({TokenType::VAR})){
             return varDeclaration();
@@ -73,7 +62,7 @@ private:
     }
 
     Expr* expression() {
-        return equality();
+        return assignment();
     }
 
     Token peek() {
@@ -199,17 +188,31 @@ private:
         return left;
     }
 
+    Expr* assignment() {
+        Expr* expr = equality(); // First, parse the left side 
+        if (match({TokenType::EQUAL})) {
+            Token equals = previous();
+            Expr* value = assignment(); // Parse the right side recursively
+            // In C++, you can use dynamic_cast to check if 'expr' is a VariableExpr
+            if (VariableExpr* varExpr = dynamic_cast<VariableExpr*>(expr)) {
+                Token name = varExpr->name; 
+                return new AssignExpr(name, value);
+            }
+            cerr << "Invalid assignment target." << endl;
+            exit(65);
+        }
+        return expr;
+    }
+
 public:
     Parser(const std::vector<Token>& tokens) : tokens(tokens) {}
 
     vector<Stmt*> run() {
         vector<Stmt*> stmt;
         while(!isAtEnd()){
-            vector<Stmt*> v = Declaration();
-            for(auto u : v){
 
-                stmt.push_back(u);
-            }
+            stmt.push_back(Declaration());
+            
         }
         return stmt;
     }
