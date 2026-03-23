@@ -13,21 +13,21 @@ private:
     int curr = 0;
     vector<Token> tokens;
 
-    Stmt* expressionStatement(){
+    vector<Stmt*> expressionStatement(){
         // cout<<"In expressionStatement"<<endl;
         Expr* expr = expression();
         consume(TokenType::SEMICOLON , "Expected ; at the end of line");
-        return new ExpressionStmt(expr);
+        return {new ExpressionStmt(expr)};
     }
 
-    Stmt* printStatement(){
+    vector<Stmt*> printStatement(){
         // cout<<"In printStatement"<<endl;
         Expr* expr = expression();
         consume(TokenType::SEMICOLON , "Expected ; at the end of line");
-        return new PrintStmt(expr);
+        return {new PrintStmt(expr)};
     }
 
-    Stmt* Statement(){
+    vector<Stmt*> Statement(){
         // cout<<"In Statement"<<endl;
         if(match({TokenType::PRINT})){
             return printStatement();
@@ -37,21 +37,32 @@ private:
         }
     }
 
-    Stmt* varDeclaration(){
+    vector<Stmt*> varDeclaration(){
         // cout<<"In varDeclaration"<<endl;
         Token name = consume(TokenType::IDENTIFIER, "Variable Naming is not Valid!!");
         Expr* expr = NULL;
-        if(match({TokenType::EQUAL})){
-            expr = expression();
+        vector<Token> tokens;
+        tokens.push_back(name);
+        int found = 0;
+        while(match({TokenType::EQUAL})){  
+            found = 1;
+            if(match({TokenType::IDENTIFIER})){
+                tokens.push_back(previous());
+            }
         }
+        if(found)
+            expr = expression();
 
         consume(TokenType::SEMICOLON , "Semicolon is expected after variable declaration.");
-        VarStmt* variable = new VarStmt(name , expr);
+        vector<Stmt*> variable ;
+        for(auto u : tokens){
+            variable.push_back(new VarStmt(u , expr));
+        }
         // cout<<variable->toString()<<endl;
         return variable;
     }
 
-    Stmt* Declaration(){
+    vector<Stmt*> Declaration(){
         // cout<<"In Declaration"<<endl;
         if(match({TokenType::VAR})){
             return varDeclaration();
@@ -129,6 +140,7 @@ private:
         if(match({TokenType::IDENTIFIER})){
             return new VariableExpr(previous());
         }
+
         cerr<< peek().toString()<<endl;
         cerr << "Expect expression." << endl;
         exit(65);
@@ -193,7 +205,11 @@ public:
     vector<Stmt*> run() {
         vector<Stmt*> stmt;
         while(!isAtEnd()){
-            stmt.push_back(Declaration());
+            vector<Stmt*> v = Declaration();
+            for(auto u : v){
+
+                stmt.push_back(u);
+            }
         }
         return stmt;
     }
