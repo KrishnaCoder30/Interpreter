@@ -55,7 +55,6 @@ int main(int argc, char* argv[]) {
         scanner.scanTokens();
         Parser parser(scanner.getTokens());
         Expr* expr = parser.parse();
-        cout << expr->toString() << endl;
         cout << expr->evaluate() << endl;
         return 0;
     }
