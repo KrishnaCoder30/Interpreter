@@ -73,17 +73,31 @@ private:
     void scanNumber(char c) {
         string numStr = "";
         numStr += c;
-
+        string literal , lex;
         while (isdigit(peek())) numStr += advance();
-
+        int ct = 0;
         // Look for a fractional part.
         if (peek() == '.' && isdigit(source[pos + 1])) {
+            ct = 1;
             numStr += advance();  // consume the '.'
             while (isdigit(peek())) numStr += advance();
+            
+        }
+        lex = numStr; 
+        literal = numStr;
+        while(ct && literal.back() == '0'){
+            literal.pop_back();
+        }
+        if(literal.back() == '.'){
+            ct = 0;
+            literal.pop_back();
+        }
+        if(ct == 0){
+          literal += ".0";
         }
 
         // Capture exactly what was in the source as the literal
-        addToken(TokenType::NUMBER, numStr, numStr);
+        addToken(TokenType::NUMBER, lex, literal);
     }
 
     void scanIdentifier(char c) {
