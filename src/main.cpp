@@ -63,6 +63,7 @@ int main(int argc, char* argv[]) {
         scanner.scanTokens();
         Parser parser(scanner.getTokens());
         vector<Stmt*> statements = parser.run();
+        
         for (auto u : statements) {
             u->execute();
         }

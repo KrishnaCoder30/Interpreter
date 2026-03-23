@@ -2,6 +2,7 @@
 using namespace std;
 #include "Token.hpp"
 #include "Value.hpp"
+#include "Enviroment.hpp"
 #pragma once
 
 struct Expr {
@@ -157,4 +158,21 @@ struct Unary : Expr {
                 return nil{};
         }
     }
+};
+
+class VariableExpr : public Expr{
+    Token name;
+
+    public:
+
+    VariableExpr(Token name) : name(name) {}
+
+    string toString(){
+        return "name = " + name.toString();
+    }
+
+    LoxValue evaluate(){
+        return env.get(name);
+    }
+
 };

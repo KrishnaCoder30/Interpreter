@@ -14,18 +14,21 @@ private:
     vector<Token> tokens;
 
     Stmt* expressionStatement(){
+        // cout<<"In expressionStatement"<<endl;
         Expr* expr = expression();
         consume(TokenType::SEMICOLON , "Expected ; at the end of line");
         return new ExpressionStmt(expr);
     }
 
     Stmt* printStatement(){
+        // cout<<"In printStatement"<<endl;
         Expr* expr = expression();
         consume(TokenType::SEMICOLON , "Expected ; at the end of line");
         return new PrintStmt(expr);
     }
 
     Stmt* Statement(){
+        // cout<<"In Statement"<<endl;
         if(match({TokenType::PRINT})){
             return printStatement();
         }
@@ -35,16 +38,21 @@ private:
     }
 
     Stmt* varDeclaration(){
+        // cout<<"In varDeclaration"<<endl;
         Token name = consume(TokenType::IDENTIFIER, "Variable Naming is not Valid!!");
         Expr* expr = NULL;
         if(match({TokenType::EQUAL})){
             expr = expression();
         }
+
         consume(TokenType::SEMICOLON , "Semicolon is expected after variable declaration.");
-        return new VarStmt(name , expr);
+        VarStmt* variable = new VarStmt(name , expr);
+        // cout<<variable->toString()<<endl;
+        return variable;
     }
 
     Stmt* Declaration(){
+        // cout<<"In Declaration"<<endl;
         if(match({TokenType::VAR})){
             return varDeclaration();
         }
@@ -117,6 +125,11 @@ private:
             consume(TokenType::RIGHT_PAREN, "Expect ')' after expression.");
             return new Grouping(expr);
         }
+
+        if(match({TokenType::IDENTIFIER})){
+            return new VariableExpr(previous());
+        }
+        cerr<< peek().toString()<<endl;
         cerr << "Expect expression." << endl;
         exit(65);
     }

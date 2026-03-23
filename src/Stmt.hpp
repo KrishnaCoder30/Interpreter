@@ -8,6 +8,7 @@ class Stmt {
 public:
     virtual ~Stmt() = default;
     virtual void execute() = 0;
+    virtual string toString() = 0;
 };
 
 class ExpressionStmt : public Stmt {
@@ -19,6 +20,10 @@ class ExpressionStmt : public Stmt {
 
     void execute() override {
         LoxValue val = expr->evaluate();
+    }
+
+    string toString() override{
+        return ("expression = " + expr->toString());
     }
 };
 
@@ -35,6 +40,10 @@ class PrintStmt : public Stmt {
         LoxValue val = expr->evaluate();
         cout << val << endl;
     }
+
+    string toString() override{
+        return ("expression = " + expr->toString());
+    }
 };
 
 class VarStmt : public Stmt {
@@ -46,8 +55,12 @@ class VarStmt : public Stmt {
 public:
     VarStmt(Token name, Expr* expr = NULL) : name(name), intializer(expr) {};
 
-    void execute() {
+    void execute() override{
         LoxValue val = intializer == NULL ? nil{} : intializer->evaluate();
         env.define(name, val);
+    }
+
+    string toString() override{
+        return ("name = " + name.toString() + " expression = " + intializer->toString());
     }
 };
