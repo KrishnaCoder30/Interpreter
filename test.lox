@@ -1,1 +1,2 @@
-"abc" + "string"
+var baz = 10;
+print baz;
