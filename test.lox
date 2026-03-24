@@ -1,19 +1,9 @@
-var a = "global a";
-var b = "global b";
-var c = "global c";
-{
-  var a = "outer a";
-  var b = "outer b";
-  {
-    var a = "inner a";
-    print a;
-    print b;
-    print c;
-  }
-  print a;
-  print b;
-  print c;
+var math_works = true;
+
+if (math_works) {
+    print "The if branch works!";
+    var a = 5;
+    if (a == 5) print "Nested if statements also work!";
+} else {
+    print "This shouldn't print!";
 }
-print a;
-print b;
-print c;

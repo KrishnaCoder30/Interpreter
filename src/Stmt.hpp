@@ -2,6 +2,8 @@
 
 #include "Enviroment.hpp"
 #include "Expression.hpp"
+#include "Token.hpp"
+#include "Value.hpp"
 
 class Stmt {
 public:
@@ -91,4 +93,39 @@ class BlockStmt : public Stmt{
         // execution complete fo back to parent
         tree = parentBlock;
     }
+};
+
+class ifStmt : public Stmt{
+    Expr* condition;
+    Stmt* ifBranch = NULL ;
+    Stmt* elseBranch = NULL;
+
+    public:
+    ifStmt(Expr* cond , Stmt* ifB , Stmt* elB) : condition(cond) , ifBranch(ifB) , elseBranch(elB) {}
+    ifStmt(Expr* cond , Stmt* ifB ) : condition(cond) , ifBranch(ifB)  {}
+
+    string toString() override{
+        string ans = "";
+        ans += "Condition = ";
+        ans += condition->toString();
+        ans += "\n";
+        ans += "ifBranch = ";
+        ans += ifBranch->toString();
+        ans += "\n";
+        ans += "elseBranch = ";
+        ans += elseBranch->toString();
+        ans += "\n";
+        return ans;
+    }
+
+    void execute() override{
+        LoxValue val = condition->evaluate();
+        if(isTruthy(val)){
+            ifBranch->execute();
+        }
+        else if(elseBranch != NULL){
+            elseBranch->execute();
+        }
+    }
+
 };

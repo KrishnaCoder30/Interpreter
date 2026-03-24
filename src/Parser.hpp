@@ -34,6 +34,17 @@ private:
         else if(match({TokenType::LEFT_BRACE})){
             return new BlockStmt(block());
         }
+        else if(match({TokenType::IF})){
+            consume(TokenType::LEFT_PAREN, "After if '(' is expected.");
+            Expr* expr = expression();
+            consume(TokenType::RIGHT_PAREN,"After if ')' is expected." );
+            Stmt* ifBranch = Statement();
+            Stmt* elseBranch = NULL;
+            if(match({TokenType::ELSE})){
+                elseBranch = Statement();
+            }
+            return new ifStmt(expr , ifBranch , elseBranch);
+        }
         else{
             return expressionStatement();
         }

@@ -11,6 +11,15 @@ using nil = std::monostate;
 // Define the container
 using LoxValue = std::variant<nil, double, std::string, bool>;
 
+
+inline bool isTruthy(const LoxValue& value) {
+    if (std::holds_alternative<nil>(value)) return false;
+    
+    if (std::holds_alternative<bool>(value)) return std::get<bool>(value);
+    
+    return true;
+}
+
 #include <iomanip>
 #include <iostream>
 
