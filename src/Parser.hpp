@@ -189,6 +189,8 @@ private:
         }
         return left;
     }
+    
+    
 
     Expr* comparison() {
         Expr* left = term();
@@ -213,12 +215,31 @@ private:
         return left;
     }
 
+    Expr* logic_and() {
+        Expr* expr = equality();
+        while (match({TokenType::AND})) {
+            Token op = previous();
+            Expr* right = equality();
+            expr = new LogicalExpr(op, expr, right);
+        }
+        return expr;
+    }
+
+    Expr* logic_or(){
+        Expr* expr = logic_and();
+        while (match({TokenType::OR})) {
+            Token op = previous();
+            Expr* right = logic_and();
+            expr = new LogicalExpr(op, expr, right);
+        }
+        return expr;
+    }
+
     Expr* assignment() {
-        Expr* expr = equality(); // First, parse the left side 
+        Expr* expr = logic_or(); 
         if (match({TokenType::EQUAL})) {
             Token equals = previous();
-            Expr* value = assignment(); // Parse the right side recursively
-            // In C++, you can use dynamic_cast to check if 'expr' is a VariableExpr
+            Expr* value = assignment();
             if (VariableExpr* varExpr = dynamic_cast<VariableExpr*>(expr)) {
                 Token name = varExpr->name; 
                 return new AssignExpr(name, value);

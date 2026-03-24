@@ -194,3 +194,36 @@ class VariableExpr : public Expr{
     }
 
 };
+
+
+class LogicalExpr : public Expr{
+    Expr* left;
+    Expr* right;
+    Token op;
+    public:
+
+    LogicalExpr(Token op , Expr* left , Expr *right) : op(op) , left(left) , right(right) {}
+
+    string toString() override {
+        return "(" + op.lexeme + " " + left->toString() + " " + right->toString() + ")";
+    }
+
+    LoxValue evaluate() override {
+        LoxValue l = left->evaluate();
+
+        switch (op.type) {
+            // Arithmetic
+            case TokenType::OR:
+                if(isTruthy(l)) return l;
+                else return right->evaluate();
+            case TokenType::AND:
+                if(!isTruthy(l)) return l;
+                else return right->evaluate();
+
+            default:
+                // Handle error: Unreachable or invalid operator
+                return LoxValue();
+        }
+    }
+
+};
