@@ -45,6 +45,13 @@ private:
             }
             return new ifStmt(expr , ifBranch , elseBranch);
         }
+        else if(match({TokenType::WHILE})){
+            consume(TokenType::LEFT_PAREN, "After if '(' is expected.");
+            Expr* expr = expression();
+            consume(TokenType::RIGHT_PAREN,"After if ')' is expected." );
+            Stmt* body = Statement();
+            return new whileStmt(expr , body);
+        }
         else{
             return expressionStatement();
         }
@@ -249,6 +256,7 @@ private:
         }
         return expr;
     }
+
 
 public:
     Parser(const std::vector<Token>& tokens) : tokens(tokens) {}

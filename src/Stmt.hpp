@@ -129,3 +129,29 @@ class ifStmt : public Stmt{
     }
 
 };
+
+class whileStmt : public Stmt{
+    Expr* condition;
+    Stmt* body = NULL ;
+
+    public:
+    whileStmt(Expr* cond , Stmt* body ) : condition(cond) , body(body)  {}
+
+    string toString() override{
+        string ans = "";
+        ans += "Condition = ";
+        ans += condition->toString();
+        ans += "\n";
+        ans += "body = ";
+        ans += body->toString();
+        ans += "\n";
+        return ans;
+    }
+
+    void execute() override{
+        while(isTruthy(condition->evaluate())){
+            body->execute();
+        }
+    }
+
+};
