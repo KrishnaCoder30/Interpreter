@@ -1,5 +1,7 @@
 #pragma once
+#include <cstddef>
 #include <string>
+#include "Enviroment.hpp"
 #include "Token.hpp"
 #include "Value.hpp"
 #include "Expression.hpp"
@@ -26,6 +28,54 @@ private:
         return new PrintStmt(expr);
     }
 
+    Stmt* forStatement(){
+        consume(TokenType::LEFT_PAREN, "After if '(' is expected.");
+        Stmt* intializer;
+        if(match({TokenType::SEMICOLON})){
+            intializer = NULL;
+        }
+        else if(match({TokenType::VAR})){
+            intializer = varDeclaration();
+        }
+        else{
+            intializer = expressionStatement();
+        }
+
+        Expr* condition = NULL;
+        if(!check(TokenType::SEMICOLON)){
+            condition = expression();
+        }
+        consume(TokenType::SEMICOLON, "Expect ';' after loop condition.");
+
+        Expr* incre = NULL;
+        if(!check(TokenType::RIGHT_PAREN)){
+            incre = expression();
+        }
+        consume(TokenType::RIGHT_PAREN, "Expected a ')' after clause");
+        Stmt* body = Statement();
+
+        if(incre != NULL){
+            vector<Stmt*> stmts;
+            stmts.push_back(body);
+            stmts.push_back(new ExpressionStmt(incre));
+            body = new BlockStmt(stmts);
+        }
+
+        if(condition == NULL){
+            condition = new Literal(true);
+        }
+
+        body = new whileStmt(condition , body);
+
+        if(intializer != NULL){
+            vector<Stmt*> blockStmts;
+            blockStmts.push_back(intializer);
+            blockStmts.push_back(body);
+            body = new BlockStmt(blockStmts);
+        }
+        return body;
+    }
+
     Stmt* Statement(){
         // cout<<"In Statement"<<endl;
         if(match({TokenType::PRINT})){
@@ -44,6 +94,9 @@ private:
                 elseBranch = Statement();
             }
             return new ifStmt(expr , ifBranch , elseBranch);
+        }
+        else if(match({TokenType::FOR})){
+            return forStatement();
         }
         else if(match({TokenType::WHILE})){
             consume(TokenType::LEFT_PAREN, "After if '(' is expected.");
