@@ -220,12 +220,43 @@ private:
         exit(65);
     }
 
+    Expr* finishCall(Expr* callee) {
+        vector<Expr*> arguments;
+        // If the very next token IS NOT a closing parenthesis, we have arguments!
+        if (!check(TokenType::RIGHT_PAREN)) {
+            do {
+                // Lox limits functions to 255 arguments maximum
+                if (arguments.size() >= 255) {
+                    cerr << "Can't have more than 255 arguments." << endl;
+                    exit(65);
+                }
+                arguments.push_back(expression());
+            } while (match({TokenType::COMMA}));
+        }
+        Token paren = consume(TokenType::RIGHT_PAREN, "Expect ')' after arguments.");
+        return new CallExpr(callee, paren, arguments);
+    }
+
+    Expr* call(){
+         // First, grab the expression we are trying to call (usually a variable name)
+        Expr* expr = primary();
+        // Check if there are parenthesis right after the expression!
+        while (true) {
+            if (match({TokenType::LEFT_PAREN})) {
+                expr = finishCall(expr);
+            } else {
+                break;
+            }
+        }
+        return expr;
+    }
+
     Expr* unary() {
         if (match({TokenType::BANG, TokenType::MINUS})) {
             Token op = previous(); 
             return new Unary(unary(), op);
         }
-        return primary();
+        return call();
     }
 
     Expr* factor() {

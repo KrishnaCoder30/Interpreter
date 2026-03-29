@@ -1,5 +1,6 @@
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <unordered_map>
@@ -7,6 +8,8 @@
 
 #include "Parser.hpp"
 #include "Scanner.hpp"
+#include "Token.hpp"
+#include "Value.hpp"
 
 using namespace std;
 
@@ -31,7 +34,7 @@ int main(int argc, char* argv[]) {
     }
 
     string command = argv[1];
-
+    tree->define(Token(TokenType::IDENTIFIER , "clock" ,  "clock") , std::make_shared<ClockCallable>());
     if (command == "tokenize") {
         string source = readFile(argv[2]);
         Scanner scanner(source);

@@ -1,5 +1,7 @@
 #pragma once
 #include <iostream>
+#include <memory>
+#include <variant>
 using namespace std;
 #include "Token.hpp"
 #include "Value.hpp"
@@ -226,4 +228,51 @@ class LogicalExpr : public Expr{
         }
     }
 
+};
+
+
+class CallExpr : public Expr{
+    Expr* callee ;
+    Token paren;
+    vector<Expr*> arguments;
+    public:
+    CallExpr(Expr* callee ,Token paren ,vector<Expr*> arguments) : callee(callee) , paren(paren) , arguments(arguments) {}
+
+    LoxValue evaluate() override{
+        LoxValue val = callee->evaluate();
+        vector<LoxValue> arg;
+        for(auto u : arguments){
+            arg.push_back(u->evaluate());
+        }
+
+        if(holds_alternative<shared_ptr<LoxCallable>>(val)){
+            shared_ptr<LoxCallable> ptr = get<shared_ptr<LoxCallable>>(val);
+            if(ptr->arity() == arg.size()){
+                return ptr->call(arg);
+            }   
+            cerr<<"Argument Count = "<<arg.size()<<" Expected = " << ptr->arity()<<endl;
+            exit(70);
+
+        }
+        cerr<<"Can only call functions and classes."<<endl;
+        exit(70);
+
+
+    }
+
+    string toString() override{
+        string ans = "";
+        ans += "Callee = ";
+        ans += callee->toString();
+        ans += '\n';
+        ans += "Paren = ";
+        ans += paren.toString();
+        ans += '\n';
+        ans += "Arguments ==> ";
+        for(auto u : arguments){
+            ans += u->toString();
+            ans += '\n';
+        }
+        return ans;
+    }
 };
