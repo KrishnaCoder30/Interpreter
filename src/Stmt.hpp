@@ -156,4 +156,52 @@ class whileStmt : public Stmt{
 
 };
 
+class functionStmt : public Stmt{
+    public:
+    Token name;
+    vector<Token> params;
+    vector<Stmt*> body;
+
+    functionStmt(Token name , vector<Token> params , vector<Stmt*> body) : name(name) , params(params) , body(body) {}
+
+    void execute() override {
+        tree->define(name, std::make_shared<LoxFunction>(this));
+    }
+
+
+    string toString() override{
+        return "fun " + name.lexeme ;
+    }
+    
+};
+
+LoxFunction::LoxFunction(functionStmt* declaration) : declaration(declaration) {}
+
+int LoxFunction::arity() {
+    return declaration->params.size();
+}
+
+string LoxFunction::toString() {
+    return "<fn " + declaration->name.lexeme + ">";
+}
+
+LoxValue LoxFunction::call(vector<LoxValue> arguments) {
+    Enviroment* env = new Enviroment(tree);
+
+    for (int i = 0; i < declaration->params.size(); i++) {
+        env->define(declaration->params[i], arguments[i]);
+    }
+
+    Enviroment* previous = tree;
+    tree = env;
+
+    for (Stmt* stmt : declaration->body) {
+        stmt->execute();
+    }
+
+    tree = previous;
+    return nil{};
+}
+
+
 

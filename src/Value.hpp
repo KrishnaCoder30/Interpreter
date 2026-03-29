@@ -7,6 +7,10 @@
 #include <memory>
 #include <vector>
 #include <chrono>
+// Forward declarations to resolve circular dependency
+struct functionStmt;
+class Enviroment;
+
 using namespace std;
 using nil = std::monostate;
 
@@ -38,6 +42,18 @@ struct ClockCallable : public LoxCallable{
 
     }
 };
+
+struct LoxFunction : public LoxCallable {
+    functionStmt* declaration;
+
+public:
+    LoxFunction(functionStmt* declaration);
+    int arity() override;
+    LoxValue call(vector<LoxValue> arguments) override;
+    string toString() override;
+};
+
+
 
 
 inline bool isTruthy(const LoxValue& value) {

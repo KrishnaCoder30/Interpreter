@@ -124,12 +124,36 @@ private:
         return new VarStmt(name , expr);
     }
 
+    Stmt* functionDeclaration(){
+        Token name = consume(TokenType::IDENTIFIER , "Function Naming is not Valid!");
+        consume(TokenType::LEFT_PAREN, "Expected '('");
+        vector<Token> params;
+        int count = 0;
+        while(count < 255 && peek().type != TokenType::RIGHT_PAREN ){
+            Token par = consume(TokenType::IDENTIFIER , "Parameter Naming is not Valid!");
+            params.push_back(par);
+            if(peek().type != TokenType::RIGHT_PAREN){
+                consume(TokenType::COMMA,"Parameters must be separated by ','.");
+            }
+            count++;
+        }
+        consume(TokenType::RIGHT_PAREN, "More than 255 parameters in function");
+        consume(TokenType::LEFT_BRACE, "Expected '{' ");
+        vector<Stmt*> body = block();
+        return new functionStmt(name , params , body);
+
+
+    }
+
 
 
     Stmt* Declaration(){
         // cout<<"In Declaration"<<endl;
         if(match({TokenType::VAR})){
             return varDeclaration();
+        }
+        else if(match({TokenType::FUN})){
+            return functionDeclaration();
         }
         else{
             return Statement();
