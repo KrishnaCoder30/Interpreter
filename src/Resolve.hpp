@@ -9,8 +9,16 @@
 
 using namespace std;
 
+
+
 class Resolve {
     vector<unordered_map<string, bool>> scopes;
+
+    enum FuntionType{
+        NONE , FUNCTION
+    };
+
+    FuntionType currentFunction = NONE;
 
 public:
     void beginScope() {
@@ -107,11 +115,15 @@ public:
             define(f->name.lexeme);
 
             beginScope();
+
             for (auto param : f->params) {
                 declare(param.lexeme);
                 define(param.lexeme);
             }
+            FuntionType parentFunction = currentFunction;
+            currentFunction = FUNCTION;
             for (auto s : f->body) resolve(s);
+            currentFunction = parentFunction;
             endScope();
 
         } else if (ifStmt* i = dynamic_cast<ifStmt*>(stmt)) {
@@ -130,6 +142,10 @@ public:
             resolve(e->expr);
 
         } else if (ReturnStmt* r = dynamic_cast<ReturnStmt*>(stmt)) {
+            if(currentFunction == NONE) {
+                cerr<<"Can't return from top-level code."<<endl;
+                exit(65);
+            }
             if (r->value != nullptr) resolve(r->value);
         }
     }
