@@ -45,7 +45,7 @@ struct ClockCallable : public LoxCallable{
 
 struct LoxFunction : public LoxCallable {
     functionStmt* declaration;
-
+    Enviroment* closure;
 public:
     LoxFunction(functionStmt* declaration);
     int arity() override;

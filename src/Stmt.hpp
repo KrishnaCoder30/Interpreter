@@ -195,7 +195,7 @@ class ReturnStmt : public Stmt{
 
 };
 
-LoxFunction::LoxFunction(functionStmt* declaration) : declaration(declaration) {}
+LoxFunction::LoxFunction(functionStmt* declaration) : declaration(declaration) , closure(tree) {}
 
 int LoxFunction::arity() {
     return declaration->params.size();
@@ -206,7 +206,7 @@ string LoxFunction::toString() {
 }
 
 LoxValue LoxFunction::call(vector<LoxValue> arguments) {
-    Enviroment* env = new Enviroment(tree);
+    Enviroment* env = new Enviroment(closure);
 
     for (int i = 0; i < declaration->params.size(); i++) {
         env->define(declaration->params[i], arguments[i]);
