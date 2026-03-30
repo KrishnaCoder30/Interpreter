@@ -1,11 +1,9 @@
-#pragma once
 #include <iostream>
-#include <memory>
-#include <variant>
 using namespace std;
 #include "Token.hpp"
 #include "Value.hpp"
 #include "Enviroment.hpp"
+#pragma once
 
 struct Expr {
     // interface
@@ -175,7 +173,7 @@ class AssignExpr : public Expr{
 
     LoxValue evaluate(){
         LoxValue val = expr->evaluate();
-        tree->assign(name , val);
+        env.assign(name , val);
         return val;
     }
 };
@@ -192,87 +190,7 @@ class VariableExpr : public Expr{
     }
 
     LoxValue evaluate(){
-        return tree->get(name);
+        return env.get(name);
     }
 
-};
-
-
-class LogicalExpr : public Expr{
-    Expr* left;
-    Expr* right;
-    Token op;
-    public:
-
-    LogicalExpr(Token op , Expr* left , Expr *right) : op(op) , left(left) , right(right) {}
-
-    string toString() override {
-        return "(" + op.lexeme + " " + left->toString() + " " + right->toString() + ")";
-    }
-
-    LoxValue evaluate() override {
-        LoxValue l = left->evaluate();
-
-        switch (op.type) {
-            // Arithmetic
-            case TokenType::OR:
-                if(isTruthy(l)) return l;
-                else return right->evaluate();
-            case TokenType::AND:
-                if(!isTruthy(l)) return l;
-                else return right->evaluate();
-
-            default:
-                // Handle error: Unreachable or invalid operator
-                return LoxValue();
-        }
-    }
-
-};
-
-
-class CallExpr : public Expr{
-    Expr* callee ;
-    Token paren;
-    vector<Expr*> arguments;
-    public:
-    CallExpr(Expr* callee ,Token paren ,vector<Expr*> arguments) : callee(callee) , paren(paren) , arguments(arguments) {}
-
-    LoxValue evaluate() override{
-        LoxValue val = callee->evaluate();
-        vector<LoxValue> arg;
-        for(auto u : arguments){
-            arg.push_back(u->evaluate());
-        }
-
-        if(holds_alternative<shared_ptr<LoxCallable>>(val)){
-            shared_ptr<LoxCallable> ptr = get<shared_ptr<LoxCallable>>(val);
-            if(ptr->arity() == arg.size()){
-                return ptr->call(arg);
-            }   
-            cerr<<"Argument Count = "<<arg.size()<<" Expected = " << ptr->arity()<<endl;
-            exit(70);
-
-        }
-        cerr<<"Can only call functions and classes."<<endl;
-        exit(70);
-
-
-    }
-
-    string toString() override{
-        string ans = "";
-        ans += "Callee = ";
-        ans += callee->toString();
-        ans += '\n';
-        ans += "Paren = ";
-        ans += paren.toString();
-        ans += '\n';
-        ans += "Arguments ==> ";
-        for(auto u : arguments){
-            ans += u->toString();
-            ans += '\n';
-        }
-        return ans;
-    }
 };

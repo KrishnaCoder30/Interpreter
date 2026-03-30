@@ -1,4 +1,3 @@
-#pragma once
 #include <iostream>
 using namespace std;
 #pragma once
@@ -60,8 +59,6 @@ enum class TokenType {
     CARET,
     BAR,
     BACKSLASH,
-
-    
 
     // Special
     EOF_TOKEN
@@ -172,13 +169,6 @@ struct Token {
     TokenType type;
     string lexeme;
     string literal;
-
-    Token(){
-        type = TokenType::EOF_TOKEN;
-        lexeme ="";
-        literal = "";
-    }
-    Token(TokenType type , string lexemme , string literal) : type(type) , lexeme(lexemme) , literal(literal) {}
 
     string toString() const {
         return typeToString(type) + " " + lexeme + " " + literal;

@@ -1,7 +1,7 @@
-#pragma once
 #include <iostream>
 using namespace std;
 #include "Token.hpp"
+#pragma once
 
 class Scanner {
 public:
