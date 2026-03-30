@@ -1,5 +1,6 @@
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <unordered_map>
@@ -7,8 +8,12 @@
 
 #include "Parser.hpp"
 #include "Scanner.hpp"
+#include "Token.hpp"
+#include "Value.hpp"
+#include "Resolve.hpp"
 
 using namespace std;
+
 
 // ─── Scanner ────────────────────────────────────────────────────────
 
@@ -31,7 +36,7 @@ int main(int argc, char* argv[]) {
     }
 
     string command = argv[1];
-
+    tree->define(Token(TokenType::IDENTIFIER , "clock" ,  "clock") , std::make_shared<ClockCallable>());
     if (command == "tokenize") {
         string source = readFile(argv[2]);
         Scanner scanner(source);
@@ -63,11 +68,16 @@ int main(int argc, char* argv[]) {
         scanner.scanTokens();
         Parser parser(scanner.getTokens());
         vector<Stmt*> statements = parser.run();
+
+        // 🚀 RESOLVING PASS
+        Resolve resolver;
+        resolver.resolve(statements);
         
         for (auto u : statements) {
             u->execute();
         }
         return 0;
+
     }
 
     cerr << "Unknown command: " << command << endl;

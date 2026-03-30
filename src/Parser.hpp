@@ -1,6 +1,7 @@
-#include <string>
-#include <variant>
 #pragma once
+#include <cstddef>
+#include <string>
+#include "Enviroment.hpp"
 #include "Token.hpp"
 #include "Value.hpp"
 #include "Expression.hpp"
@@ -27,10 +28,91 @@ private:
         return new PrintStmt(expr);
     }
 
+    Stmt* forStatement(){
+        consume(TokenType::LEFT_PAREN, "After if '(' is expected.");
+        Stmt* intializer;
+        if(match({TokenType::SEMICOLON})){
+            intializer = NULL;
+        }
+        else if(match({TokenType::VAR})){
+            intializer = varDeclaration();
+        }
+        else{
+            intializer = expressionStatement();
+        }
+
+        Expr* condition = NULL;
+        if(!check(TokenType::SEMICOLON)){
+            condition = expression();
+        }
+        consume(TokenType::SEMICOLON, "Expect ';' after loop condition.");
+
+        Expr* incre = NULL;
+        if(!check(TokenType::RIGHT_PAREN)){
+            incre = expression();
+        }
+        consume(TokenType::RIGHT_PAREN, "Expected a ')' after clause");
+        Stmt* body = Statement();
+
+        if(incre != NULL){
+            vector<Stmt*> stmts;
+            stmts.push_back(body);
+            stmts.push_back(new ExpressionStmt(incre));
+            body = new BlockStmt(stmts);
+        }
+
+        if(condition == NULL){
+            condition = new Literal(true);
+        }
+
+        body = new whileStmt(condition , body);
+
+        if(intializer != NULL){
+            vector<Stmt*> blockStmts;
+            blockStmts.push_back(intializer);
+            blockStmts.push_back(body);
+            body = new BlockStmt(blockStmts);
+        }
+        return body;
+    }
+
     Stmt* Statement(){
         // cout<<"In Statement"<<endl;
         if(match({TokenType::PRINT})){
             return printStatement();
+        }
+        else if(match({TokenType::LEFT_BRACE})){
+            return new BlockStmt(block());
+        }
+        else if(match({TokenType::IF})){
+            consume(TokenType::LEFT_PAREN, "After if '(' is expected.");
+            Expr* expr = expression();
+            consume(TokenType::RIGHT_PAREN,"After if ')' is expected." );
+            Stmt* ifBranch = Statement();
+            Stmt* elseBranch = NULL;
+            if(match({TokenType::ELSE})){
+                elseBranch = Statement();
+            }
+            return new ifStmt(expr , ifBranch , elseBranch);
+        }
+        else if(match({TokenType::FOR})){
+            return forStatement();
+        }
+        else if(match({TokenType::RETURN})){
+            Expr* val = NULL;
+            if (!check(TokenType::SEMICOLON)) {
+            val = expression(); 
+            }
+            consume(TokenType::SEMICOLON, "Expect ';' after return value.");
+            return new ReturnStmt(val);
+
+        }
+        else if(match({TokenType::WHILE})){
+            consume(TokenType::LEFT_PAREN, "After if '(' is expected.");
+            Expr* expr = expression();
+            consume(TokenType::RIGHT_PAREN,"After if ')' is expected." );
+            Stmt* body = Statement();
+            return new whileStmt(expr , body);
         }
         else{
             return expressionStatement();
@@ -51,14 +133,50 @@ private:
         return new VarStmt(name , expr);
     }
 
+    Stmt* functionDeclaration(){
+        Token name = consume(TokenType::IDENTIFIER , "Function Naming is not Valid!");
+        consume(TokenType::LEFT_PAREN, "Expected '('");
+        vector<Token> params;
+        int count = 0;
+        while(count < 255 && peek().type != TokenType::RIGHT_PAREN ){
+            Token par = consume(TokenType::IDENTIFIER , "Parameter Naming is not Valid!");
+            params.push_back(par);
+            if(peek().type != TokenType::RIGHT_PAREN){
+                consume(TokenType::COMMA,"Parameters must be separated by ','.");
+            }
+            count++;
+        }
+        consume(TokenType::RIGHT_PAREN, "More than 255 parameters in function");
+        consume(TokenType::LEFT_BRACE, "Expected '{' ");
+        vector<Stmt*> body = block();
+        return new functionStmt(name , params , body);
+
+
+    }
+
+
+
     Stmt* Declaration(){
         // cout<<"In Declaration"<<endl;
         if(match({TokenType::VAR})){
             return varDeclaration();
         }
+        else if(match({TokenType::FUN})){
+            return functionDeclaration();
+        }
         else{
             return Statement();
         }
+    }
+
+    vector<Stmt*> block(){
+        vector<Stmt*> stmt;
+        while(!check(TokenType::RIGHT_BRACE) && !isAtEnd()){
+            stmt.push_back(Declaration());
+        }
+        consume(TokenType::RIGHT_BRACE, "Expect '}' at the end of Block");
+
+        return stmt;
     }
 
     Expr* expression() {
@@ -135,12 +253,43 @@ private:
         exit(65);
     }
 
+    Expr* finishCall(Expr* callee) {
+        vector<Expr*> arguments;
+        // If the very next token IS NOT a closing parenthesis, we have arguments!
+        if (!check(TokenType::RIGHT_PAREN)) {
+            do {
+                // Lox limits functions to 255 arguments maximum
+                if (arguments.size() >= 255) {
+                    cerr << "Can't have more than 255 arguments." << endl;
+                    exit(65);
+                }
+                arguments.push_back(expression());
+            } while (match({TokenType::COMMA}));
+        }
+        Token paren = consume(TokenType::RIGHT_PAREN, "Expect ')' after arguments.");
+        return new CallExpr(callee, paren, arguments);
+    }
+
+    Expr* call(){
+         // First, grab the expression we are trying to call (usually a variable name)
+        Expr* expr = primary();
+        // Check if there are parenthesis right after the expression!
+        while (true) {
+            if (match({TokenType::LEFT_PAREN})) {
+                expr = finishCall(expr);
+            } else {
+                break;
+            }
+        }
+        return expr;
+    }
+
     Expr* unary() {
         if (match({TokenType::BANG, TokenType::MINUS})) {
             Token op = previous(); 
             return new Unary(unary(), op);
         }
-        return primary();
+        return call();
     }
 
     Expr* factor() {
@@ -164,6 +313,8 @@ private:
         }
         return left;
     }
+    
+    
 
     Expr* comparison() {
         Expr* left = term();
@@ -188,12 +339,31 @@ private:
         return left;
     }
 
+    Expr* logic_and() {
+        Expr* expr = equality();
+        while (match({TokenType::AND})) {
+            Token op = previous();
+            Expr* right = equality();
+            expr = new LogicalExpr(op, expr, right);
+        }
+        return expr;
+    }
+
+    Expr* logic_or(){
+        Expr* expr = logic_and();
+        while (match({TokenType::OR})) {
+            Token op = previous();
+            Expr* right = logic_and();
+            expr = new LogicalExpr(op, expr, right);
+        }
+        return expr;
+    }
+
     Expr* assignment() {
-        Expr* expr = equality(); // First, parse the left side 
+        Expr* expr = logic_or(); 
         if (match({TokenType::EQUAL})) {
             Token equals = previous();
-            Expr* value = assignment(); // Parse the right side recursively
-            // In C++, you can use dynamic_cast to check if 'expr' is a VariableExpr
+            Expr* value = assignment();
             if (VariableExpr* varExpr = dynamic_cast<VariableExpr*>(expr)) {
                 Token name = varExpr->name; 
                 return new AssignExpr(name, value);
@@ -203,6 +373,7 @@ private:
         }
         return expr;
     }
+
 
 public:
     Parser(const std::vector<Token>& tokens) : tokens(tokens) {}

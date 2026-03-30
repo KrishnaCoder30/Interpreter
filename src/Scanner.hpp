@@ -1,7 +1,7 @@
+#pragma once
 #include <iostream>
 using namespace std;
 #include "Token.hpp"
-#pragma once
 
 class Scanner {
 public:
@@ -74,7 +74,7 @@ private:
     void scanNumber(char c) {
         string numStr = "";
         numStr += c;
-        string literal , lex;
+        string literal, lex;
         while (isdigit(peek())) numStr += advance();
         int ct = 0;
         // Look for a fractional part.
@@ -82,19 +82,18 @@ private:
             ct = 1;
             numStr += advance();  // consume the '.'
             while (isdigit(peek())) numStr += advance();
-            
         }
-        lex = numStr; 
+        lex = numStr;
         literal = numStr;
-        while(ct && literal.back() == '0'){
+        while (ct && literal.back() == '0') {
             literal.pop_back();
         }
-        if(literal.back() == '.'){
+        if (literal.back() == '.') {
             ct = 0;
             literal.pop_back();
         }
-        if(ct == 0){
-          literal += ".0";
+        if (ct == 0) {
+            literal += ".0";
         }
 
         // Capture exactly what was in the source as the literal

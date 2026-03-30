@@ -1,11 +1,4 @@
-var foo;
-var b;
-var a = b = 2;
-foo = 1;
-print a;
-print foo;
-b = foo = 3;
-print b;
-print foo = 2;
-foo = b;
-print foo;
+{
+  var a = "value";
+  var a = "other";
+}

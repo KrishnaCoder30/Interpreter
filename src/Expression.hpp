@@ -1,9 +1,11 @@
+#pragma once
 #include <iostream>
+#include <memory>
+#include <variant>
 using namespace std;
+#include "Enviroment.hpp"
 #include "Token.hpp"
 #include "Value.hpp"
-#include "Enviroment.hpp"
-#pragma once
 
 struct Expr {
     // interface
@@ -44,8 +46,10 @@ struct Literal : Expr {
 };
 
 struct Grouping : Expr {
+public:
     Expr* expr;
     Grouping(Expr* expr) : expr(expr) {}
+
     string toString() override {
         return "(group " + expr->toString() + ")";
     }
@@ -73,10 +77,12 @@ string getS(const LoxValue& x) {
 }
 
 struct Binary : Expr {
+public:
     Expr* left;
     Token op;
     Expr* right;
     Binary(Expr* left, Token op, Expr* right) : left(left), op(op), right(right) {}
+
     string toString() override {
         return "(" + op.lexeme + " " + left->toString() + " " + right->toString() + ")";
     }
@@ -126,6 +132,7 @@ struct Binary : Expr {
 };
 
 struct Unary : Expr {
+public:
     Expr* child;
     Token op;
 
@@ -160,37 +167,120 @@ struct Unary : Expr {
     }
 };
 
-class AssignExpr : public Expr{
+class AssignExpr : public Expr {
+public:
     Token name;
     Expr* expr;
-    public:
+    int dist = -1;
 
-    AssignExpr(Token name , Expr* expr) : name(name) , expr(expr) {}
+    AssignExpr(Token name, Expr* expr) : name(name), expr(expr) {}
 
-    string toString(){
+    string toString() {
         return "name = " + name.toString();
     }
 
-    LoxValue evaluate(){
+    LoxValue evaluate() override {
         LoxValue val = expr->evaluate();
-        env.assign(name , val);
+        if (dist != -1)
+            tree->assignAt(dist, name, val);
+        else
+            globals->assign(name, val);
         return val;
     }
 };
 
-class VariableExpr : public Expr{
-    public:
+class VariableExpr : public Expr {
+public:
     Token name;
-
+    int dist = -1;
 
     VariableExpr(Token name) : name(name) {}
 
-    string toString(){
+    string toString() {
         return "name = " + name.toString();
     }
 
-    LoxValue evaluate(){
-        return env.get(name);
+    LoxValue evaluate() override {
+        return dist != -1 ? tree->getAt(dist, name.lexeme) : globals->get(name);
+    }
+};
+
+class LogicalExpr : public Expr {
+public:
+    Expr* left;
+    Expr* right;
+    Token op;
+
+    LogicalExpr(Token op, Expr* left, Expr* right) : op(op), left(left), right(right) {}
+
+    string toString() override {
+        return "(" + op.lexeme + " " + left->toString() + " " + right->toString() + ")";
     }
 
+    LoxValue evaluate() override {
+        LoxValue l = left->evaluate();
+
+        switch (op.type) {
+            // Arithmetic
+            case TokenType::OR:
+                if (isTruthy(l))
+                    return l;
+                else
+                    return right->evaluate();
+            case TokenType::AND:
+                if (!isTruthy(l))
+                    return l;
+                else
+                    return right->evaluate();
+
+            default:
+                // Handle error: Unreachable or invalid operator
+                return LoxValue();
+        }
+    }
+};
+
+class CallExpr : public Expr {
+public:
+    Expr* callee;
+    Token paren;
+    vector<Expr*> arguments;
+
+    CallExpr(Expr* callee, Token paren, vector<Expr*> arguments)
+        : callee(callee), paren(paren), arguments(arguments) {}
+
+    LoxValue evaluate() override {
+        LoxValue val = callee->evaluate();
+        vector<LoxValue> arg;
+        for (auto u : arguments) {
+            arg.push_back(u->evaluate());
+        }
+
+        if (holds_alternative<shared_ptr<LoxCallable>>(val)) {
+            shared_ptr<LoxCallable> ptr = get<shared_ptr<LoxCallable>>(val);
+            if (ptr->arity() == arg.size()) {
+                return ptr->call(arg);
+            }
+            cerr << "Argument Count = " << arg.size() << " Expected = " << ptr->arity() << endl;
+            exit(70);
+        }
+        cerr << "Can only call functions and classes." << endl;
+        exit(70);
+    }
+
+    string toString() override {
+        string ans = "";
+        ans += "Callee = ";
+        ans += callee->toString();
+        ans += '\n';
+        ans += "Paren = ";
+        ans += paren.toString();
+        ans += '\n';
+        ans += "Arguments ==> ";
+        for (auto u : arguments) {
+            ans += u->toString();
+            ans += '\n';
+        }
+        return ans;
+    }
 };
