@@ -98,6 +98,15 @@ private:
         else if(match({TokenType::FOR})){
             return forStatement();
         }
+        else if(match({TokenType::RETURN})){
+            Expr* val = NULL;
+            if (!check(TokenType::SEMICOLON)) {
+            val = expression(); 
+            }
+            consume(TokenType::SEMICOLON, "Expect ';' after return value.");
+            return new ReturnStmt(val);
+
+        }
         else if(match({TokenType::WHILE})){
             consume(TokenType::LEFT_PAREN, "After if '(' is expected.");
             Expr* expr = expression();

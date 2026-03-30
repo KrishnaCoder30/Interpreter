@@ -53,6 +53,12 @@ public:
     string toString() override;
 };
 
+struct returnException{
+    // holds the return value of function
+    LoxValue value;
+
+    returnException(LoxValue val) : value(val) {}
+};
 
 
 

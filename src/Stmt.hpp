@@ -1,5 +1,6 @@
 #pragma once
 
+#include <variant>
 #include "Enviroment.hpp"
 #include "Expression.hpp"
 #include "Token.hpp"
@@ -175,6 +176,25 @@ class functionStmt : public Stmt{
     
 };
 
+class ReturnStmt : public Stmt{
+    Expr* value;
+
+    public:
+    ReturnStmt(Expr* expr) : value(expr) {}
+
+    string toString() override{
+        return value->toString();
+    }
+
+    void execute() override{
+        LoxValue val = value != NULL ? value->evaluate() : nil{};
+        returnException rval(val);
+        throw(rval);
+        
+    }
+
+};
+
 LoxFunction::LoxFunction(functionStmt* declaration) : declaration(declaration) {}
 
 int LoxFunction::arity() {
@@ -195,9 +215,16 @@ LoxValue LoxFunction::call(vector<LoxValue> arguments) {
     Enviroment* previous = tree;
     tree = env;
 
-    for (Stmt* stmt : declaration->body) {
-        stmt->execute();
+    try{
+        for (Stmt* stmt : declaration->body) {
+            stmt->execute();
+        }
     }
+    catch(returnException &e){
+        tree = previous;
+        return e.value;
+    }
+    
 
     tree = previous;
     return nil{};
