@@ -1,0 +1,220 @@
+\documentclass[12pt,a4paper,oneside]{report}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{margin=1in}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{setspace}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+% Formatting
+\onehalfspacing
+\titleformat{\chapter}[display]
+  {\normalfont\bfseries\huge}{\chaptername\ \thechapter}{20pt}{\Huge}
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\thepage}
+\lhead{Lox Interpreter Construction}
+
+% Code Listings Style
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+\lstset{style=mystyle}
+
+\title{
+    \Huge \textbf{Design and Implementation of the Lox Programming Language Interpreter} \\
+    \vspace{2cm}
+    \large A Comprehensive Technical Report on Tree-Walk Interpreters and Lexical Scoping Analysis \\
+    \vspace{1cm}
+    \textit{Constructed via the CodeCrafters Methodology}
+}
+\author{Krishna \\ \small \texttt{Interpreter Project}}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Abstract}
+This report provides an in-depth technical walkthrough of the construction of a high-performance tree-walk interpreter for the Lox language. Starting from raw lexical scanning and progressing through recursive descent parsing, scoping resolution, and object-oriented programming, this paper explores the design decisions and implementation details necessitated by modern language theory. Special focus is given to the challenges of static analysis, closure hygiene, and the architectural extensions afforded by Abstract Syntax Tree manipulation.
+
+\tableofcontents
+
+\chapter{Introduction}
+Modern programming languages are built upon decades of formal grammar theory and architectural patterns. This project involves the creation of an interpreter for Lox, a dynamically typed language that balances simplicity with powerful features like first-class functions and lexical scoping.
+
+The implementation was developed using C++17, emphasizing robust memory management via smart pointers and a type-safe value system utilizing \texttt{std::variant}. Throughout this report, we will examine the layered architecture of the interpreter: the frontend (Scanning), the middle-end (Parsing and Analysis), and the backend (Execution).
+
+\chapter{Lexical Analysis: The Scanner}
+The scanning phase is responsible for converting the raw "source of characters" into a sequence of "meaningful tokens."
+
+\section{Lexical Grammars and Maximal Munch}
+A key challenge in scanning is ambiguity. For instance, when the scanner sees the character \texttt{<}, it cannot immediately determine if the token is "less than" or "less than or equal to" (\texttt{<=}). We implemented a "lookahead" strategy to resolve this.
+
+\section{Core Implementation Snippet}
+The following snippet demonstrates how the scanner handles multi-character lexemes and produces tokens:
+
+\begin{lstlisting}[language=C++]
+void Scanner::scanToken() {
+    char c = advance();
+    switch (c) {
+        case '(': addToken(LEFT_PAREN); break;
+        case '+': addToken(PLUS); break;
+        case '!': addToken(match('=') ? BANG_EQUAL : BANG); break;
+        case '<': addToken(match('=') ? LESS_EQUAL : LESS); break;
+        case '/':
+            if (match('/')) {
+                while (peek() != '\n' && !isAtEnd()) advance();
+            } else {
+                addToken(SLASH);
+            }
+            break;
+        case '"': string(); break;
+        default:
+            if (isdigit(c)) number();
+            else if (isalpha(c)) identifier();
+            else reportError(line, "Unexpected character.");
+            break;
+    }
+}
+\end{lstlisting}
+
+This logic ensures that operators like \texttt{!=} are consumed as single units, preserving the semantic intent of the programmer.
+
+\chapter{Abstract Syntax Trees and Parsing}
+The second phase transforms the flat list of tokens into a structured tree representing the program's logic.
+
+\section{Representing Expressions}
+We defined several AST nodes using an inheritance hierarchy. Each node represents a specific grammatical construct, such as a binary operation or a literal value.
+
+\section{The Recursive Descent Algorithm}
+Our parser implementation uses recursive descent to handle operator precedence. Each precedence level corresponds to a function. For example, the \texttt{multiplication} function calls \texttt{unary}, and \texttt{unary} calls \texttt{primary}.
+
+\begin{lstlisting}[language=C++]
+Expr* Parser::multiplication() {
+    Expr* expr = unary();
+    while (match({STAR, SLASH})) {
+        Token op = previous();
+        Expr* right = unary();
+        expr = new Binary(expr, op, right);
+    }
+    return expr;
+}
+\end{lstlisting}
+
+This recursive structure ensures that \texttt{1 + 2 * 3} is correctly parsed as \texttt{1 + (2 * 3)}, satisfying the standard rules of arithmetic.
+
+\chapter{Evaluating Expressions}
+Interpretation begins with the evaluation of these syntax trees.
+
+\section{The LoxValue System}
+Since Lox is dynamically typed, a single variable can hold a string, a number, or a boolean during its lifetime. In C++, we used a variant-based approach to store these types safely.
+
+\section{Execution Logic}
+The interpreter evaluates nodes by recursively calling their execution methods. For a Binary node, it evaluates the left and right children, then applies the operator to the resulting values.
+
+\chapter{Statements and State: Variables and Environments}
+A programming language requires the ability to store and retrieve data.
+
+\section{The Environment Stack}
+Environments are implemented as hash maps that store variable names and their current values. Scoping is handled by nesting these environments: an inner scope (like a block) points to its parent scope.
+
+\begin{lstlisting}[language=C++]
+class Environment {
+    unordered_map<string, LoxValue> values;
+    Environment* enclosing;
+
+    LoxValue get(Token name) {
+        if (values.count(name.lexeme)) return values[name.lexeme];
+        if (enclosing != nullptr) return enclosing->get(name);
+        throw runtime_error("Undefined variable.");
+    }
+};
+\end{lstlisting}
+
+\chapter{Control Flow and Logical Branching}
+Logical branching is handled by modifying the order of AST traversal.
+
+\section{Conditional Execution}
+When an \texttt{if} statement is encountered, the interpreter evaluates the condition first. Only one of the possible branches is then executed, ensuring correct logical flow.
+
+\section{Loops}
+Loops like \texttt{while} are implemented by repeatedly evaluating the body expression as long as the condition evaluates to \texttt{true}.
+
+\chapter{Functions and Closures}
+Functions introduce reusable code blocks and complex scoping challenges.
+
+\section{Implementation of Closures}
+A closure captures the environment in which the function was declared. This allows variables in outer scopes to persist as long as the function exists.
+
+\begin{lstlisting}[language=C++]
+LoxValue LoxFunction::call(vector<LoxValue> arguments) {
+    Environment* environment = new Environment(closure);
+    for (int i = 0; i < declaration.params.size(); i++) {
+        environment->define(declaration.params[i].lexeme, arguments[i]);
+    }
+    return interpreter.executeBlock(declaration.body, environment);
+}
+\end{lstlisting}
+
+\chapter{Resolving and Static Analysis}
+Static analysis is the key to deep technical correctness in scoping.
+
+\section{Binding Distances}
+The \textbf{Resolver} pass is a semi-compiler that runs before evaluation. It counts how many hops away a variable's declaration is from its usage. This "distance" is stored in the AST node.
+
+\section{Preventing Scoping Errors}
+By knowing the exact distance, the interpreter can jump directly to the correct environment, bypassing the "dynamic lookup" problem that plagues simpler tree-walk engines.
+
+\chapter{Classes and Object-Oriented Programming}
+Classes provide the blueprint for data and behavior encapsulation.
+
+\section{Instances and Fields}
+Instances are objects that hold their own state. When a property is accessed, the interpreter lookups up the "field" in the instance's private storage map.
+
+\section{Method Lookup}
+If a field is not found, the interpreter checks the class definition for a "method." This provides the polymorphism and code-reuse required for object-oriented design.
+
+\chapter{Applications and Future Extensions}
+The Lox interpreter is a versatile symbolic engine that can be transitioned into specialized scientific and mathematical applications.
+
+\section{AST Manipulation for Automatic Differentiation}
+\textbf{Technical Overview}: The interpreter can be modified to support symbolic calculus. By traversing a mathematical AST, we can apply derivation rules programmatically. For example, a \texttt{Power} node representing $x^n$ can be transformed into $n \cdot x^{n-1}$. This logic is the precursor to the automatic differentiation used in Deep Learning frameworks.
+
+\section{Domain-Specific Language (DSL) for Tensors}
+\textbf{Technical Overview}: By extending the \texttt{LoxValue} variant to include Matrix objects, we can turn Lox into a linear algebra engine. This involves overloading the binary operators (\texttt{+}, \texttt{*}) to perform matrix addition and dot products, respectively.
+
+\section{Probabilistic Execution and State Spaces}
+\textbf{Technical Overview}: In probabilistic programming, variables represent weights or distributions. We can alter the evaluator to perform "Branch Exploration," where the interpreter tracks the probability of multiple execution paths simultaneously, modeling the decision graphs used in modern AI.
+
+\chapter{Conclusion}
+The construction of the Lox interpreter represents a complete journey from raw text to high-level abstraction. Through this project, we have demonstrated the power of recursive descent parsing, the elegance of closure hygiene, and the robustness of static analysis. The result is a platform ready for the next generation of domain-specific language research.
+
+\end{document}
