@@ -1,4 +1,4 @@
-{
-  var a = "value";
-  var a = "other";
+class DevonshireCream {
+  serveOn() { return "Scones"; }
 }
+print DevonshireCream;

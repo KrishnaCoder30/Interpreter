@@ -1,0 +1,416 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{Madrid}
+
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{hyperref}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{cppstyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\scriptsize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    language=C++
+}
+\lstset{style=cppstyle}
+
+\title[Interpreter Architecture]{Mathematical and Structural Architecture of a C++ Interpreter}
+\subtitle{Bridging Graph Theory, Formal Logic, and Software Engineering}
+\author{Interpreter Development Team}
+\date{\today}
+
+\begin{document}
+
+% --- Section 1: Introduction & Architecture (Slides 1-4) ---
+
+\begin{frame}
+    \titlepage
+\end{frame}
+
+\begin{frame}{Table of Contents}
+    \tableofcontents
+\end{frame}
+
+\section{Introduction \& Architecture}
+
+\begin{frame}{Motivation}
+    \begin{block}{The Engineering Challenge}
+        Translating an unstructured, continuous sequence of human-readable characters into a rigorously defined, deterministic mathematical execution framework. 
+    \end{block}
+    \vspace{0.5cm}
+    \textbf{Intersection of Disciplines:}
+    \begin{itemize}
+        \item \textbf{Mathematics:} Directed Acyclic Graphs (DAGs), state mapping sequences, Boolean logic.
+        \item \textbf{Software Engineering:} Recursive architectures, polymorphism, manual memory management, hash-based memory representations.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{High-Level System Architecture}
+    The system maps to a standard pipeline utilizing several disjoint but inherently cooperative phases.
+    \begin{itemize}
+        \item \textbf{Scanner:} Discretization phase.
+        \item \textbf{Parser:} Structural topology generation Phase.
+        \item \textbf{Evaluator:} Graph reduction and Execution phase.
+        \item \textbf{Environment:} Context persistence mapping.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{The Pipeline Model}
+    \begin{block}{Execution Pipeline Flow}
+        $\text{Raw Source} \xrightarrow{\text{Lexer}} \text{Tokens} \xrightarrow{\text{Parser}} \text{AST} \xrightarrow{\text{Evaluator}} \text{Result/Side-effect}$
+    \end{block}
+    \vspace{0.5cm}
+    \begin{itemize}
+        \item Characters shift mathematically to discrete vectors.
+        \item Vectors shift to syntax trees representing precedence.
+        \item Syntax trees undergo recursive post-order traversals to derive states.
+    \end{itemize}
+\end{frame}
+
+% --- Section 2: Lexical Analysis & Tokenization (Slides 5-9) ---
+
+\section{Lexical Analysis \& Tokenization}
+
+\begin{frame}{Lexical Tokenization: Concept}
+    \begin{block}{Continuous-to-Discrete Extraction}
+        Lexical analysis reads a stream of characters from memory and converts it into a sequence of discretized objects \textit{(Tokens)}.
+    \end{block}
+    This is highly analogous to continuous signal sampling in digital systems or the preprocessing embedding phase in NLP architectures. We convert raw topological manifolds (strings) into state-distinct integers and classified sequences.
+\end{frame}
+
+\begin{frame}{Modeling as a Deterministic Finite Automaton (DFA)}
+    \begin{itemize}
+        \item The Scanner models a DFA iteratively processing inputs.
+        \item Transitions evaluate the structural validity of consecutive ASCII bounds.
+        \item \textbf{States}: Start, In-String, In-Number, In-Identifier, Done.
+        \item \textbf{Output}: Vectors classified functionally for the parser domain.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{The Token Structure}
+    The Token struct is the primary mathematical node at the lexical level.
+    \begin{lstlisting}
+enum class TokenType { 
+    LEFT_PAREN, RIGHT_PAREN, PLUS, MINUS, NUMBER, STRING, EOF_TOKEN // etc... 
+};
+
+struct Token {
+    TokenType type;
+    string lexeme;
+    string literal; // Retains the scalar evaluation natively
+};
+    \end{lstlisting}
+    Each token inherently binds the lexical type with its original planar character sequence (lexeme).
+\end{frame}
+
+\begin{frame}[fragile]{Scanner C++ Implementation: Core Logic}
+    We use iterative advancement over string matrices.
+    \begin{lstlisting}
+char advance() {
+    return source[pos++];
+}
+
+char peek() const {
+    return isAtEnd() ? '\0' : source[pos];
+}
+
+bool match(char expected) {
+    if (isAtEnd() || source[pos] != expected) return false;
+    pos++;
+    return true;
+}
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Handling Maximal Munch \& Strings}
+    To enforce token uniqueness, the state machine implements \textit{Maximal Munch} -- eating as many characters as grammatically allowed to form the largest distinct unit.
+    \begin{lstlisting}
+void scanString() {
+    string value;
+    while (!isAtEnd() && peek() != '"') {
+        if (peek() == '\n') line++;
+        value += advance();
+    }
+    advance(); // consume closing "
+    addToken(TokenType::STRING, "\"" + value + "\"", value);
+}
+    \end{lstlisting}
+\end{frame}
+
+% --- Section 3: Formal Grammar & Syntactic Analysis (Slides 10-16) ---
+
+\section{Formal Grammar \& Syntactic Analysis}
+
+\begin{frame}{Context-Free Grammar (CFG) via BNF}
+    The formal structural constraints are defined via Backus-Naur Form (BNF).
+    \begin{alertblock}{Mathematical Rules}
+        $ expression \ \rightarrow \ assignment $ \\
+        $ assignment \ \rightarrow \ \text{IDENTIFIER} \ "=" \ assignment \ | \ logic\_or $ \\
+        $ logic\_or \ \ \rightarrow \ logic\_and \ ( \ "or" \ logic\_and )^* $ \\
+        $ logic\_and \ \rightarrow \ equality \ ( \ "and" \ equality )^* $ \\
+    \end{alertblock}
+    This recursively ensures that lower-precedence actions derive higher-precedence nodes.
+\end{frame}
+
+\begin{frame}{Transitioning from Tokens to ASTs}
+    Once tokens are formulated, linear context falls short of handling strict structural boundaries. Processing tokens sequentially inherently violates computational order-of-operation axioms.
+    
+    \vspace{0.5cm}
+    \textbf{Solution:} Generate a Directed Acyclic Graph (DAG) known as the \emph{Abstract Syntax Tree}. Each node governs a hierarchy evaluated structurally bottom-up.
+\end{frame}
+
+\begin{frame}{Operator Precedence}
+    \begin{table}[]
+        \begin{tabular}{|l|l|l|}
+        \hline
+        \textbf{Rule}       & \textbf{Operators}       & \textbf{Associativity}     \\ \hline
+        Primary             & \texttt{()}, literals      & N/A                        \\ \hline
+        Unary               & \texttt{!}, \texttt{-}     & Right-to-left              \\ \hline
+        Factor              & \texttt{*}, \texttt{/}     & Left-to-right              \\ \hline
+        Term                & \texttt{+}, \texttt{-}     & Left-to-right              \\ \hline
+        Comparison          & \texttt{<}, \texttt{<=}    & Left-to-right              \\ \hline
+        Equality            & \texttt{==}, \texttt{!=}   & Left-to-right              \\ \hline
+        \end{tabular}
+    \end{table}
+    The grammar implicitly hard-codes execution precedence into the tree depth.
+\end{frame}
+
+\begin{frame}{Operator Associativity}
+    \begin{block}{Left-Associative Trees}
+        For commutative and non-commutative linear transformations (like $5 - 3 - 1$), the parser enforces left-association. 
+    \end{block}
+    This means our generation loops group earlier terms into nested left-heavy binary trees.
+\end{frame}
+
+\begin{frame}{Recursive Descent Parsing}
+    Our translation relies on a Top-Down Recursive Descent Parser. Each context-free grammar production rule accurately corresponds to a distinct C++ function.
+    
+    \begin{itemize}
+        \item Evaluates the highest-priority derivation first (the lowest precedence operation).
+        \item Recursively descends down to terminal nodes (Primitives).
+        \item Consumes logic strictly in $O(N)$ execution time.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Recursive Descent: Code Implementation}
+    A clear demonstration of left-heavy recursion to form mathematical groups:
+    \begin{lstlisting}
+Expr* equality() {
+    Expr* left = comparison();
+    Token op;
+    while (match({TokenType::EQUAL_EQUAL, TokenType::BANG_EQUAL})) {
+        op = previous();
+        Expr* right = comparison();
+        left = new Binary(left, op, right);
+    }
+    return left;
+}
+    \end{lstlisting}
+\end{frame}
+
+% --- Section 4: System Modeling with Abstract Syntax Trees (Slides 17-21) ---
+
+\section{System Modeling with Abstract Syntax Trees (AST)}
+
+\begin{frame}{The Expr \& Stmt Architectural Hierarchies}
+    Operations strictly divide into two independent categories forming mathematical graphs.
+    \begin{itemize}
+        \item \textbf{Expr (Expression):} Directed vertices determining an evaluation computation reducing strictly to a pure scalar state. 
+        \item \textbf{Stmt (Statement):} Top-level commands enforcing spatial or temporal side-effects upon the persistent state map without propagating values back up.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Polymorphism for Node Representation}
+    Because nodes consist of distinct variables (Unary, Binary, Literal), the system employs C++ Object-Oriented Polymorphism.
+    \begin{lstlisting}
+struct Expr {
+    // Top-Level AST Node interface
+    virtual ~Expr() = default;
+    virtual string toString() = 0;
+    virtual LoxValue evaluate() = 0;
+};
+    \end{lstlisting}
+    All evaluations naturally follow Virtual Function Tables (v-tables) resolving exact types elegantly dynamically at runtime.
+\end{frame}
+
+\begin{frame}[fragile]{Binary Node Structural Example}
+    The Binary AST node effectively holds mathematical operations combining two edges.
+    \begin{lstlisting}
+struct Binary : Expr {
+    Expr* left;    // Left child branch
+    Token op;      // The central scalar operator
+    Expr* right;   // Right child branch
+
+    Binary(Expr* left, Token op, Expr* right) 
+        : left(left), op(op), right(right) {}
+
+    LoxValue evaluate() override {
+        // Post-Order reduction methodology
+    }
+};
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}{Visualizing the Directed Acyclic Graph (AST)}
+    \begin{figure}[h!]
+        \centering
+        \includegraphics[width=0.75\textwidth]{codecrafters-interpreter-cpp/Abstract_syntax_tree_for_Euclidean_algorithm.svg.png}
+        \caption{DAG Representation of computational logic ensuring distinct paths.}
+        \label{fig:ast_vis}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Handling Typed Scalars in C++ (std::variant)}
+    To strictly adhere to dynamic type safety in a highly explicit, rigid type system (C++), scalar node reductions are bounded mathematically via `std::variant`:
+    \begin{block}{Variant Definition}
+        \texttt{using LoxValue = std::variant<std::monostate, double, bool, std::string, ...>}
+    \end{block}
+    This resolves the halting problem constraint of storing dynamic types in a typed vector.
+\end{frame}
+
+% --- Section 5: Dynamic State & Memory Management (Slides 22-26) ---
+
+\section{Dynamic State \& Memory Management}
+
+\begin{frame}{The Environment as a Mapping Function}
+    A continuous computational phase cannot exist without variable retention maps.
+    \begin{block}{The $E$ Tensor}
+        We define the context mapping as: $E: \text{String} \rightarrow \text{Value}$
+    \end{block}
+    This acts fundamentally as the system's "Hidden State Tensor". With each subsequent time-step (statement), the Environment captures or overwrites explicit definitions mirroring RNN behavior.
+\end{frame}
+
+\begin{frame}[fragile]{C++ Implementation: Hash Maps}
+    Spatial lookup bounds require strict $O(1)$ amortized memory retrieval functions. Thus, this maps mathematically perfectly to `std::unordered\_map`.
+    \begin{lstlisting}
+class Enviroment {
+public:
+    Enviroment* par; // Pointer to parent state (chained scoping)
+    unordered_map<string, LoxValue> var; // The memory grid
+    
+    // ...
+};
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}{Lexical Scoping and Memory Chaining}
+    Scoping limits mathematical causality. Variables defined in depth nodes cannot bleed linearly outward.
+    \begin{itemize}
+        \item Local matrices point recursively backward to global arrays via pointers.
+        \item Any map traversal that hits \texttt{NULL} causes an intentional halting fault.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Variable Definition vs. Assignment}
+    There is a strict logical derivation between establishing a map axis and overwriting scalar variables.
+    \begin{lstlisting}
+void define(Token key, LoxValue val) {
+    var[key.lexeme] = val; // Always creates bounded domain 
+}
+
+void assign(Token key, LoxValue val) {
+    Enviroment* curr = this;
+    while(curr != NULL && curr->var.find(key.lexeme) == curr->var.end()) {
+        curr = curr->par; // Traverse recursive parents
+    }
+    if(curr == NULL) exit(70); // Runtime exception
+    curr->var[key.lexeme] = val; // Overwrite
+}
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}{The Importance of State Distinctiveness}
+    If a variable is tracked via \textit{assignment} prior to \textit{declaration}, it signifies a time reversal paradox in formal causal logic computation. The mapping architecture enforces the strict linear timeline of the interpreter via this implementation.
+\end{frame}
+
+% --- Section 6: Tree-Walk Evaluation (Slides 27-30+) ---
+
+\section{Tree-Walk Evaluation}
+
+\begin{frame}{The Execution Model}
+    Execution shifts entirely to a Post-Order Traversal sequence across the generated syntax graph. 
+    \begin{itemize}
+        \item \textbf{Recurse Left} $\rightarrow$ Solve node.
+        \item \textbf{Recurse Right} $\rightarrow$ Solve node.
+        \item \textbf{Collapse Parent} $\rightarrow$ Merge sub-branches applying scalar operations.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Expression Reductions (Returning Values)}
+    Expressions collapse upward cleanly.
+    \begin{lstlisting}
+LoxValue evaluate() override {
+    LoxValue l = left->evaluate();
+    LoxValue r = right->evaluate();
+
+    switch (op.type) {
+        case TokenType::PLUS:
+            if((holds_alternative<double>(l) && holds_alternative<double>(r)))
+                return getD(l) + getD(r); // Pure scalar mathematical sum
+        // ...
+    }
+}
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Statement Executions (Side Effects)}
+    Statements execute transversally with no upward scalar inheritance, modifying global mapping limits inline.
+    \begin{lstlisting}
+class ReturnStmt : public Stmt{
+public:
+    Expr* value;
+
+    void execute() override{
+        LoxValue val = value != NULL ? value->evaluate() : nil{};
+        returnException rval(val);
+        throw(rval); // Interrupting procedural execution to jump causality cleanly
+    }
+};
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}{Handling Abstract Tree Dynamics (Control Flow)}
+    Loops and logical jumps (e.g. \texttt{while}, \texttt{if}) are not linear vectors.
+    \begin{itemize}
+        \item They behave as recursive re-evaluation subroutines inside the C++ host boundary.
+        \item Traversal pauses on child evaluations based entirely on mapping state validation rules (\textit{Truthiness}).
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Runtime Error Handling \& Conclusions}
+    \begin{alertblock}{Mathematical Bounds}
+        A tree graph collapsing with incorrectly matched scalars (e.g. division by zero, type mismatches natively) throws direct memory interrupt violations.
+    \end{alertblock}
+    \vspace{0.5cm}
+    \textbf{Conclusion:} 
+    By leveraging rigorous graph topology mapping, formal context free grammars, and continuous tensor environments, we enforce deterministic execution paths mathematically bound securely inside modern Software Engineering C++ paradigms.
+\end{frame}
+
+\begin{frame}
+    \begin{center}
+        \Huge \textbf{Questions?} \\
+        \vspace{0.5cm}
+        \large End of Presentation
+    \end{center}
+\end{frame}
+
+\end{document}
